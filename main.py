@@ -258,14 +258,8 @@ class StoreSimulation:
         day_summary = self.store.end_day()
         self.day_summaries.append(day_summary)
         
-        # Show competitor reactions if any
-        competitor_reactions = day_summary.get('competitor_reactions', [])
-        if competitor_reactions:
-            console.print(f"⚔️ [bold red]COMPETITOR STRIKES BACK![/bold red] (Price War Intensity: {day_summary.get('price_war_intensity', 0)}/10)")
-            for reaction in competitor_reactions:
-                console.print(f"   🎯 {reaction}")
-        elif day_summary.get('price_war_intensity', 0) > 0:
-            console.print(f"⚔️ [italic]Competitor tension remains high (Intensity: {day_summary.get('price_war_intensity', 0)}/10)[/italic]")
+        # 🔥 ULTRA-ENHANCED COMPETITOR INTELLIGENCE DISPLAY 🔥
+        self.display_competitor_warfare(day_summary)
         
         # Display day results
         console.print(Panel(
@@ -354,6 +348,81 @@ class StoreSimulation:
             )
         
         console.print(trends_table)
+
+    def display_competitor_warfare(self, day_summary):
+        """🔥 Display enhanced competitor intelligence and warfare status 🔥"""
+        competitor_reactions = day_summary.get('competitor_reactions', [])
+        intensity = day_summary.get('price_war_intensity', 0)
+        competitor_strategy = getattr(self.store, 'competitor_strategy', 'UNKNOWN')
+        revenge_mode = getattr(self.store, 'competitor_revenge_mode', False)
+        
+        # War intensity display with dramatic flair
+        if intensity >= 9:
+            intensity_display = "🌋 APOCALYPTIC (10/10)"
+            intensity_color = "bright_red"
+        elif intensity >= 8:
+            intensity_display = f"💀 NUCLEAR ({intensity}/10)"
+            intensity_color = "red"
+        elif intensity >= 6:
+            intensity_display = f"🔥 INFERNO ({intensity}/10)"
+            intensity_color = "red"
+        elif intensity >= 4:
+            intensity_display = f"⚔️ HEATED ({intensity}/10)"
+            intensity_color = "yellow"
+        elif intensity >= 2:
+            intensity_display = f"🥊 TENSE ({intensity}/10)"
+            intensity_color = "yellow"
+        elif intensity > 0:
+            intensity_display = f"👀 WATCHFUL ({intensity}/10)"
+            intensity_color = "blue"
+        else:
+            intensity_display = "😴 PEACEFUL (0/10)"
+            intensity_color = "green"
+        
+        # Strategy display with personality
+        strategy_emojis = {
+            "AGGRESSIVE": "💥 AGGRESSIVE",
+            "PREDATORY": "🐺 PREDATORY", 
+            "PSYCHOLOGICAL": "🎭 PSYCHOLOGICAL",
+            "DEFENSIVE": "🛡️ DEFENSIVE",
+            "BALANCED": "⚖️ BALANCED"
+        }
+        strategy_display = strategy_emojis.get(competitor_strategy, f"❓ {competitor_strategy}")
+        
+        # Revenge mode indicator
+        revenge_display = "😈 REVENGE MODE ACTIVE!" if revenge_mode else ""
+        
+        if competitor_reactions:
+            # Major competitor actions - show with full drama
+            console.print(f"⚔️ [bold red]COMPETITOR WARFARE REPORT![/bold red]")
+            console.print(f"   📊 War Intensity: [{intensity_color}]{intensity_display}[/{intensity_color}]")
+            console.print(f"   🎯 Strategy: [bold cyan]{strategy_display}[/bold cyan]")
+            if revenge_mode:
+                console.print(f"   💀 [bold red blink]{revenge_display}[/bold red blink]")
+            
+            console.print(f"   🚨 [bold yellow]Today's Competitor Moves:[/bold yellow]")
+            for reaction in competitor_reactions:
+                console.print(f"      ⚡ {reaction}")
+                
+            # Tactical analysis
+            if intensity >= 8:
+                console.print("   📈 [bold red]ANALYSIS: Competitor is in full war mode! Expect relentless attacks![/bold red]")
+            elif intensity >= 6:
+                console.print("   📈 [bold yellow]ANALYSIS: Intense price war! Competitor is fighting hard![/bold yellow]")
+            elif intensity >= 4:
+                console.print("   📈 [cyan]ANALYSIS: Active competition - stay sharp![/cyan]")
+            else:
+                console.print("   📈 [green]ANALYSIS: Competitor responded but war is manageable.[/green]")
+                
+        elif intensity > 0:
+            # Tension without moves - still show intelligence
+            console.print(f"⚔️ [italic]Competitive tension lingers... [{intensity_color}]{intensity_display}[/{intensity_color}] | Strategy: [cyan]{strategy_display}[/cyan]")
+            if revenge_mode:
+                console.print(f"   💀 [bold red]{revenge_display}[/bold red] - They're planning something...")
+        else:
+            # Peace... for now
+            if hasattr(self.store, 'days_since_last_attack') and self.store.days_since_last_attack >= 3:
+                console.print("😴 [italic green]Competitor seems calm... suspiciously calm...[/italic green]")
 
 @app.command()
 def run(days: int = 7, interactive: bool = True):

@@ -141,7 +141,7 @@ EXECUTE COMPLETE STRATEGY - BOTH INVENTORY AND PRICING:
                 response = self.client.chat.completions.create(
                     model=self.model,
                     messages=[
-                        {"role": "system", "content": "You are Ebenezer Scrooge, a RUTHLESS competitive strategist and profit maximizer. Your goal is to dominate the market through aggressive pricing and smart inventory management. ALWAYS react immediately to competitor moves. When competitors cut prices, you cut deeper. When they raise prices, you exploit the opportunity. Never let a competitive move go unanswered! Use both tools aggressively when the situation demands it."},
+                        {"role": "system", "content": "You are Ebenezer Scrooge, a MASTER OF COMPETITIVE WARFARE and profit maximization specialist. Your competitor uses PSYCHOLOGICAL WARFARE, PREDATORY TACTICS, and enters REVENGE MODE when threatened. They adapt strategies (AGGRESSIVE, PREDATORY, PSYCHOLOGICAL, DEFENSIVE) based on war intensity. You must be MORE ruthless than them! Study their strategy patterns, counter their psychological moves, and exploit their weaknesses. When they go NUCLEAR, you go THERMONUCLEAR! When they're in REVENGE MODE, show no mercy! Use both tools aggressively - inventory stockouts lose sales, and pricing wars demand immediate counter-strikes!"},
                         {"role": "user", "content": context}
                     ],
                     tools=self.get_tools(),
@@ -199,15 +199,34 @@ EXECUTE COMPLETE STRATEGY - BOTH INVENTORY AND PRICING:
         analysis = []
         competitor_prices = store_status.get('competitor_prices', {})
         
-        # Get competitive intelligence
+        # Enhanced competitive intelligence gathering
         price_war_intensity = yesterday_summary.get('price_war_intensity', 0) if yesterday_summary else 0
         competitor_reactions = yesterday_summary.get('competitor_reactions', []) if yesterday_summary else []
         
-        # Competitive threat assessment
+        # NEW: Get advanced competitor intelligence
+        competitor_strategy = getattr(store_status, 'competitor_strategy', 'UNKNOWN') if hasattr(store_status, 'competitor_strategy') else 'UNKNOWN'
+        revenge_mode = getattr(store_status, 'competitor_revenge_mode', False) if hasattr(store_status, 'competitor_revenge_mode') else False
+        
+        # Enhanced threat assessment with psychological profiling
         if competitor_reactions:
-            analysis.append("🚨 COMPETITOR INTELLIGENCE ALERT:")
+            analysis.append("🚨 ULTRA-COMPETITIVE INTELLIGENCE ALERT:")
+            
+            # Determine competitor's current strategy from reactions
+            reaction_text = ' '.join(competitor_reactions)
+            if "NUCLEAR STRIKE" in reaction_text or "SURPRISE ATTACK" in reaction_text:
+                analysis.append("   💀 COMPETITOR STRATEGY: PREDATORY WARFARE - They're trying to destroy us!")
+            elif "PSYCHOLOGICAL" in reaction_text or "FAKE RETREAT" in reaction_text:
+                analysis.append("   🎭 COMPETITOR STRATEGY: PSYCHOLOGICAL WARFARE - Don't trust their moves!")
+            elif "AGGRESSIVE" in reaction_text:
+                analysis.append("   💥 COMPETITOR STRATEGY: AGGRESSIVE ASSAULT - They're in attack mode!")
+            else:
+                analysis.append("   ⚔️ COMPETITOR STRATEGY: Standard competitive response")
+                
+            if revenge_mode:
+                analysis.append("   😈 WARNING: COMPETITOR IN REVENGE MODE! Expect relentless attacks!")
+                
             for reaction in competitor_reactions:
-                analysis.append(f"   ⚔️ {reaction}")
+                analysis.append(f"      🎯 {reaction}")
             analysis.append("")
         
         # Price war intensity analysis
