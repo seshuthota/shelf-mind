@@ -263,13 +263,16 @@ Based on current competitor prices, set these EXACT prices:"""
         return {"orders": fallback_orders, "prices": {}}
     
     def _analyze_pricing_opportunities(self, store_status: Dict, yesterday_summary: Dict = None) -> str:
-        """Generate detailed pricing analysis for the agent"""
+        """🎯 Phase 1C: Generate detailed pricing analysis with customer segment intelligence"""
         analysis = []
         competitor_prices = store_status.get('competitor_prices', {})
         
         # Enhanced competitive intelligence gathering
         price_war_intensity = yesterday_summary.get('price_war_intensity', 0) if yesterday_summary else 0
         competitor_reactions = yesterday_summary.get('competitor_reactions', []) if yesterday_summary else []
+        
+        # 🎯 Phase 1C: Customer Segment Intelligence
+        segment_intelligence = self._analyze_customer_segments(yesterday_summary) if yesterday_summary else ""
         
         # NEW: Get advanced competitor intelligence
         competitor_strategy = getattr(store_status, 'competitor_strategy', 'UNKNOWN') if hasattr(store_status, 'competitor_strategy') else 'UNKNOWN'
@@ -285,6 +288,12 @@ Based on current competitor prices, set these EXACT prices:"""
         analysis.append("   🔥 Even $0.01 adjustments show market dominance!")
         analysis.append("   💀 TURTLING IS FORBIDDEN - ATTACK OR DIE!")
         analysis.append("")
+        
+        # 🎯 Phase 1C: Customer Segment Strategic Intelligence
+        if segment_intelligence:
+            analysis.append("🎯 CUSTOMER SEGMENT WARFARE INTELLIGENCE:")
+            analysis.extend(segment_intelligence.split('\n'))
+            analysis.append("")
         
         # Anti-turtling system - detect and punish passive behavior
         if self.consecutive_passive_days >= 2:
@@ -502,6 +511,56 @@ Based on current competitor prices, set these EXACT prices:"""
                 analysis.append("   👑 CHAMPIONS ATTACK DAILY - BE RELENTLESS!")
         
         return "\n".join(analysis)
+    
+    def _analyze_customer_segments(self, yesterday_summary: Dict) -> str:
+        """🎯 Phase 1C: Analyze customer segment performance and generate strategic insights"""
+        if not yesterday_summary:
+            return ""
+        
+        # Try to extract customer segment data from yesterday_summary if available
+        # This is a simplified approach - in a real implementation, we'd pass segment data directly
+        total_customers = yesterday_summary.get('units_sold', 0) // 2  # Rough estimate
+        total_revenue = yesterday_summary.get('revenue', 0)
+        
+        if total_customers == 0:
+            return "   📊 No customer data from yesterday - focus on competitive positioning!"
+        
+        # Estimate segment performance based on market dynamics
+        # This is a heuristic approach until we have direct segment data integration
+        price_sensitive_ratio = 0.6  # 60% price-sensitive assumption
+        brand_loyal_ratio = 0.4       # 40% brand-loyal assumption
+        
+        avg_spend = total_revenue / max(1, total_customers)
+        
+        insights = []
+        
+        # Strategic insights based on customer behavior patterns
+        if avg_spend > 4.0:  # High average spend
+            insights.append("   💎 PREMIUM OPPORTUNITY: Customers paying well - brand-loyal segment responding!")
+            insights.append("   📈 STRATEGY: Focus on premium products, raise prices on popular items")
+            insights.append("   🎯 TARGET: Brand-loyal customers will pay for quality - exploit this!")
+        elif avg_spend < 2.5:  # Low average spend  
+            insights.append("   💰 PRICE WAR ACTIVE: Low spending indicates price-sensitive dominance!")
+            insights.append("   📉 STRATEGY: Aggressive competitive pricing to capture price-sensitive segment")
+            insights.append("   🔥 TARGET: Price-sensitive customers choose cheapest - be the cheapest!")
+        else:  # Moderate spend
+            insights.append("   ⚖️ BALANCED MARKET: Mixed customer segments - strategic positioning needed")
+            insights.append("   🎯 STRATEGY: Segment-specific pricing - cheap for bargain hunters, premium for loyalists")
+        
+        # Product-specific segment insights
+        insights.append("   🛍️ SEGMENT-SPECIFIC TACTICS:")
+        insights.append("      • Price-Sensitive (60%): Target with loss leaders and competitive pricing")  
+        insights.append("      • Brand-Loyal (40%): Premium pricing opportunities on preferred products")
+        insights.append("      • Coke/Chips: Likely loyalty products - test higher margins")
+        insights.append("      • Water/Gum: Commodity products - must be price competitive")
+        
+        # Psychological warfare considerations
+        insights.append("   🧠 PSYCHOLOGICAL PRICING WARFARE:")
+        insights.append("      • Use $1.99 instead of $2.00 to trick price-sensitive minds")
+        insights.append("      • Price increases on loyalty products can succeed if gradual")
+        insights.append("      • Price cuts on competitive products can steal customers")
+        
+        return "\n".join(insights)
     
     def explain_decision(self, decision: Dict[str, int]) -> str:
         """Get explanation for the last decision"""

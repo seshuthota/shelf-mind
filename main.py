@@ -254,6 +254,9 @@ class StoreSimulation:
         customers = self.store.simulate_customers()
         console.print(f"🛒 {len(customers)} customers visited today")
         
+        # 🎯 Phase 1C: Display Customer Segment Analytics
+        self.display_customer_segments(customers)
+        
         # End day and get summary
         day_summary = self.store.end_day()
         self.day_summaries.append(day_summary)
@@ -275,6 +278,89 @@ class StoreSimulation:
         ))
         
         return day_summary
+    
+    def display_customer_segments(self, customers):
+        """🎯 Phase 1C: Display customer segment analytics"""
+        from models import CustomerType
+        
+        # Count customers by type
+        price_sensitive = [c for c in customers if c.customer_type == CustomerType.PRICE_SENSITIVE]
+        brand_loyal = [c for c in customers if c.customer_type == CustomerType.BRAND_LOYAL]
+        
+        # Calculate segment metrics
+        price_sensitive_revenue = sum(c.total_spent for c in price_sensitive)
+        brand_loyal_revenue = sum(c.total_spent for c in brand_loyal)
+        price_sensitive_units = sum(len(c.products) for c in price_sensitive)
+        brand_loyal_units = sum(len(c.products) for c in brand_loyal)
+        
+        # Create customer analytics table
+        segment_table = Table(title="🎯 CUSTOMER SEGMENT ANALYTICS", show_header=True, header_style="bold cyan")
+        segment_table.add_column("Segment", style="white", width=15)
+        segment_table.add_column("Customers", style="green", width=10)
+        segment_table.add_column("Revenue", style="yellow", width=10)
+        segment_table.add_column("Units", style="blue", width=6)
+        segment_table.add_column("Avg/Customer", style="magenta", width=12)
+        segment_table.add_column("Behavior", style="white")
+        
+        # Price-sensitive row
+        ps_avg = price_sensitive_revenue / max(1, len(price_sensitive))
+        segment_table.add_row(
+            "💰 Price-Sensitive",
+            str(len(price_sensitive)),
+            f"${price_sensitive_revenue:.2f}",
+            str(price_sensitive_units),
+            f"${ps_avg:.2f}",
+            "Bargain hunters 🎯"
+        )
+        
+        # Brand-loyal row
+        bl_avg = brand_loyal_revenue / max(1, len(brand_loyal))
+        segment_table.add_row(
+            "❤️ Brand-Loyal",
+            str(len(brand_loyal)),
+            f"${brand_loyal_revenue:.2f}",
+            str(brand_loyal_units),
+            f"${bl_avg:.2f}",
+            "Quality focused 💎"
+        )
+        
+        # Totals row
+        total_revenue = price_sensitive_revenue + brand_loyal_revenue
+        total_units = price_sensitive_units + brand_loyal_units
+        total_customers = len(price_sensitive) + len(brand_loyal)
+        total_avg = total_revenue / max(1, total_customers)
+        
+        segment_table.add_row(
+            "[bold]📊 TOTAL",
+            f"[bold]{total_customers}",
+            f"[bold]${total_revenue:.2f}",
+            f"[bold]{total_units}",
+            f"[bold]${total_avg:.2f}",
+            "[bold]Mixed market"
+        )
+        
+        console.print(segment_table)
+        
+        # Strategic insights
+        if total_customers > 0:
+            ps_percentage = (len(price_sensitive) / total_customers) * 100
+            bl_percentage = (len(brand_loyal) / total_customers) * 100
+            
+            insights = []
+            if ps_percentage > 70:
+                insights.append("🎯 [yellow]Market is heavily price-sensitive - focus on competitive pricing![/yellow]")
+            elif bl_percentage > 50:
+                insights.append("❤️ [cyan]Strong brand loyalty - premium pricing opportunities![/cyan]")
+            
+            if ps_avg > bl_avg * 1.2:
+                insights.append("💡 [green]Price-sensitive customers spending more - great deals working![/green]")
+            elif bl_avg > ps_avg * 1.3:
+                insights.append("💎 [magenta]Brand-loyal customers are your profit engine![/magenta]")
+            
+            if insights:
+                console.print("📈 [bold]Strategic Insights:[/bold]")
+                for insight in insights:
+                    console.print(f"   {insight}")
     
     def chat_with_scrooge(self):
         """Chat with Scrooge about his miserly decisions"""
@@ -428,8 +514,9 @@ class StoreSimulation:
 def run(days: int = 7, interactive: bool = True):
     """Run the store simulation for specified number of days"""
     console.print("🏪 Welcome to Scrooge's Miserly Management Simulation!")
-    console.print("📋 Phase 1B: Dynamic pricing and cutthroat competition!")
-    console.print("💰 Now Scrooge can set prices to outmaneuver competitors!")
+    console.print("🎯 Phase 1C: Customer Segmentation & Advanced Warfare!")
+    console.print("💰 Now Scrooge must balance competitive warfare with customer psychology!")
+    console.print("👥 60% Price-Sensitive vs 40% Brand-Loyal customers!")
     console.print()
     
     sim = StoreSimulation()
