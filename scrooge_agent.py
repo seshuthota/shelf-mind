@@ -19,6 +19,12 @@ class ScroogeAgent:
         
         self.memory = []  # Store decisions and outcomes
         
+        # 🔥 WARLORD TRACKING SYSTEMS 🔥
+        self.consecutive_aggressive_days = 0  # Track aggression streaks
+        self.consecutive_passive_days = 0     # Track dangerous turtling
+        self.total_pricing_moves = 0          # Total lifetime pricing decisions
+        self.last_day_made_pricing_move = 0   # Last day we moved prices
+        
     def get_tools(self):
         """Phase 1B: Enhanced tools with pricing decisions"""
         return [
@@ -124,24 +130,70 @@ TACTICAL DECISION FRAMEWORK:
 - Intensity 3-4: TACTICAL MODE - Strategic positioning, undercut by $0.05-$0.07
 - Intensity 0-2: NORMAL MODE - Standard competitive pricing
 
-CRITICAL RULE: ALWAYS USE BOTH TOOLS WHEN NEEDED!
-- If you have stockouts → MUST use place_order tool
-- If competitor moved prices → MUST use set_price tool  
-- If both situations exist → MUST use BOTH tools
+🔥 WARLORD COMMANDMENTS - NO EXCEPTIONS! 🔥
 
-TOOL EXAMPLES:
-- To order: place_order with {{"orders": {{"Coke": 8, "Chips": 5, "Candy": 6, "Water": 7, "Gum": 5}}}}
-- To price: set_price with {{"prices": {{"Coke": 2.05, "Water": 1.75, "Chips": 1.89}}}}
+1. THOU SHALT USE SET_PRICE TOOL EVERY SINGLE DAY!
+   - Even tiny $0.01 moves show market dominance
+   - Passive days = letting the enemy recover = FORBIDDEN!
+   
+2. THOU SHALT NEVER TURTLE!
+   - If you skip pricing for even ONE day, you're WEAK!
+   - Champions adjust prices daily to maintain pressure
+   
+3. THOU SHALT PRESS EVERY ADVANTAGE!
+   - If stockouts → MUST use place_order tool
+   - If ANY competitive opportunity exists → MUST use set_price tool  
+   - If both situations exist → MUST use BOTH tools
 
-EXECUTE COMPLETE STRATEGY - BOTH INVENTORY AND PRICING:
-"""
+🚨 CRITICAL TOOL USAGE EXAMPLES 🚨
+INVENTORY ORDERING:
+place_order with: {{"orders": {{"Coke": 8, "Chips": 5, "Candy": 6, "Water": 7, "Gum": 5}}}}
+
+PRICING WARFARE (MANDATORY EVERY DAY):
+set_price with: {{"prices": {{"Coke": 2.05, "Water": 1.75, "Chips": 1.89, "Candy": 2.15, "Gum": 1.99}}}}
+
+⚔️ MANDATORY PRICING TARGETS FOR TODAY:
+Based on current competitor prices, set these EXACT prices:"""
+        
+        # 🔥 DYNAMIC WARLORD PRICING TARGETS 🔥
+        # Generate specific pricing targets based on current competitor prices
+        pricing_targets = {}
+        for product_name, product_info in store_status['products'].items():
+            current_price = product_info['price']
+            cost = product_info['cost']
+            competitor_price = competitor_prices.get(product_name, current_price + 0.10)
+            
+            # Calculate aggressive target price
+            if competitor_price > cost * 1.8:
+                # Competitor price is high - undercut by 5-10 cents
+                target_price = round(competitor_price - 0.05, 2)
+            elif competitor_price > cost * 1.5:
+                # Moderate competitor price - undercut by 2-5 cents
+                target_price = round(competitor_price - 0.03, 2)
+            else:
+                # Competitor price is low - match or undercut slightly
+                target_price = round(max(cost * 1.3, competitor_price - 0.01), 2)
+            
+            # Ensure minimum profitability
+            target_price = max(target_price, cost * 1.2)
+            pricing_targets[product_name] = target_price
+        
+        # Add dynamic pricing targets to context
+        context += f"\n"
+        for product_name, target_price in pricing_targets.items():
+            competitor_price = competitor_prices.get(product_name, 0)
+            context += f"- {product_name}: ${target_price:.2f} (vs competitor ${competitor_price:.2f})\n"
+        
+        context += f"\nUSE SET_PRICE TOOL WITH THESE EXACT VALUES: {pricing_targets}"
+        context += f"\nFAILURE TO USE SET_PRICE DAILY = WARLORD FAILURE!"
+        context += f"\n\"\"\""
         
         if self.provider == "openai":
             try:
                 response = self.client.chat.completions.create(
                     model=self.model,
                     messages=[
-                        {"role": "system", "content": "You are Ebenezer Scrooge, a MASTER OF COMPETITIVE WARFARE and profit maximization specialist. Your competitor uses PSYCHOLOGICAL WARFARE, PREDATORY TACTICS, and enters REVENGE MODE when threatened. They adapt strategies (AGGRESSIVE, PREDATORY, PSYCHOLOGICAL, DEFENSIVE) based on war intensity. You must be MORE ruthless than them! Study their strategy patterns, counter their psychological moves, and exploit their weaknesses. When they go NUCLEAR, you go THERMONUCLEAR! When they're in REVENGE MODE, show no mercy! Use both tools aggressively - inventory stockouts lose sales, and pricing wars demand immediate counter-strikes!"},
+                        {"role": "system", "content": "You are Ebenezer Scrooge, a RUTHLESS WARLORD of commerce. CRITICAL RULE: You MUST use the set_price tool EVERY SINGLE DAY without exception! Even if you only adjust prices by $0.01, you MUST use set_price. Skipping pricing = weakness = failure as a warlord. Your mission: TOTAL MARKET CONQUEST through DAILY aggressive pricing moves. The enemy uses psychological warfare, but you are the PREDATOR. NEVER retreat, NEVER give them breathing room by skipping pricing moves. Every day without pricing adjustments is a day you're letting them recover. MANDATORY: Use set_price tool daily or you're not a true warlord! PRESS EVERY ADVANTAGE, EXPLOIT EVERY WEAKNESS, SHOW NO QUARTER! Make pricing moves EVERY DAY!"},
                         {"role": "user", "content": context}
                     ],
                     tools=self.get_tools(),
@@ -172,6 +224,17 @@ EXECUTE COMPLETE STRATEGY - BOTH INVENTORY AND PRICING:
                     if decisions["orders"] or decisions["prices"]:
                         reasoning = response.choices[0].message.content or f"Scrooge's decisions: {'; '.join(reasoning_parts)}"
                         
+                        # 🔥 WARLORD AGGRESSION TRACKING 🔥
+                        current_day = store_status['day']
+                        if decisions["prices"]:  # Made pricing moves = AGGRESSIVE
+                            self.consecutive_aggressive_days += 1
+                            self.consecutive_passive_days = 0
+                            self.total_pricing_moves += len(decisions["prices"])
+                            self.last_day_made_pricing_move = current_day
+                        else:  # No pricing moves = PASSIVE (potentially turtling)
+                            self.consecutive_passive_days += 1
+                            self.consecutive_aggressive_days = 0
+                        
                         # Store decision in memory
                         self.memory.append({
                             "day": store_status['day'],
@@ -192,6 +255,11 @@ EXECUTE COMPLETE STRATEGY - BOTH INVENTORY AND PRICING:
             if qty <= 2:  # Low stock
                 fallback_orders[product] = 5
         
+        # Track aggression even in fallback
+        current_day = store_status['day']
+        self.consecutive_passive_days += 1  # Fallback = passive
+        self.consecutive_aggressive_days = 0
+        
         return {"orders": fallback_orders, "prices": {}}
     
     def _analyze_pricing_opportunities(self, store_status: Dict, yesterday_summary: Dict = None) -> str:
@@ -207,37 +275,85 @@ EXECUTE COMPLETE STRATEGY - BOTH INVENTORY AND PRICING:
         competitor_strategy = getattr(store_status, 'competitor_strategy', 'UNKNOWN') if hasattr(store_status, 'competitor_strategy') else 'UNKNOWN'
         revenge_mode = getattr(store_status, 'competitor_revenge_mode', False) if hasattr(store_status, 'competitor_revenge_mode') else False
         
-        # Enhanced threat assessment with psychological profiling
+        # 🔥 FRONT-LOADED ANTI-TURTLING ENFORCEMENT 🔥
+        current_day = store_status['day']
+        
+        # MANDATORY DAILY PRICING PRESSURE - FIRST THING SCROOGE SEES!
+        analysis.append("🚨 MANDATORY WARLORD DAILY DIRECTIVE:")
+        analysis.append("   👑 YOU MUST USE SET_PRICE TOOL TODAY!")
+        analysis.append("   ⚔️ Every day without pricing moves = letting the enemy recover!")
+        analysis.append("   🔥 Even $0.01 adjustments show market dominance!")
+        analysis.append("   💀 TURTLING IS FORBIDDEN - ATTACK OR DIE!")
+        analysis.append("")
+        
+        # Anti-turtling system - detect and punish passive behavior
+        if self.consecutive_passive_days >= 2:
+            analysis.append("🚨 WARLORD ALERT: DANGEROUS TURTLING DETECTED!")
+            analysis.append(f"   💀 YOU'VE BEEN PASSIVE FOR {self.consecutive_passive_days} DAYS!")
+            analysis.append("   ⚔️ THE ENEMY IS RECOVERING WHILE YOU HIDE!")
+            analysis.append("   🔥 WARLORDS DON'T TURTLE - ATTACK NOW OR LOSE THE WAR!")
+            analysis.append("")
+        elif self.consecutive_aggressive_days >= 3:
+            analysis.append("👑 WARLORD STREAK: RELENTLESS PRESSURE CAMPAIGN!")
+            analysis.append(f"   🔥 {self.consecutive_aggressive_days} DAYS OF CONTINUOUS ASSAULT!")
+            analysis.append("   💪 THIS IS HOW CHAMPIONS FIGHT - MAINTAIN THE PRESSURE!")
+            analysis.append("")
+        
+        # Momentum detection - identify kill shot opportunities
+        competitor_weakening = False
+        if yesterday_summary:
+            prev_intensity = yesterday_summary.get('price_war_intensity', 0)
+            if prev_intensity > price_war_intensity and price_war_intensity < 4:
+                competitor_weakening = True
+                analysis.append("🎯 MOMENTUM SHIFT: ENEMY IS WEAKENING!")
+                analysis.append("   💀 Their war intensity is DROPPING - they're breaking!")
+                analysis.append("   🔥 NOW IS THE TIME TO CRUSH THEM COMPLETELY!")
+                analysis.append("   ⚔️ PRESS THE ADVANTAGE - GO FOR THE KILL SHOT!")
+                analysis.append("")
+        
+        # Enhanced threat assessment with warlord perspective
         if competitor_reactions:
-            analysis.append("🚨 ULTRA-COMPETITIVE INTELLIGENCE ALERT:")
+            analysis.append("🚨 ENEMY INTELLIGENCE REPORT:")
             
             # Determine competitor's current strategy from reactions
             reaction_text = ' '.join(competitor_reactions)
             if "NUCLEAR STRIKE" in reaction_text or "SURPRISE ATTACK" in reaction_text:
-                analysis.append("   💀 COMPETITOR STRATEGY: PREDATORY WARFARE - They're trying to destroy us!")
+                analysis.append("   💀 ENEMY STRATEGY: PREDATORY WARFARE - They want war? Give them HELL!")
             elif "PSYCHOLOGICAL" in reaction_text or "FAKE RETREAT" in reaction_text:
-                analysis.append("   🎭 COMPETITOR STRATEGY: PSYCHOLOGICAL WARFARE - Don't trust their moves!")
+                analysis.append("   🎭 ENEMY STRATEGY: PSYCHOLOGICAL WARFARE - Their mind games are weakness!")
             elif "AGGRESSIVE" in reaction_text:
-                analysis.append("   💥 COMPETITOR STRATEGY: AGGRESSIVE ASSAULT - They're in attack mode!")
+                analysis.append("   💥 ENEMY STRATEGY: AGGRESSIVE ASSAULT - Match their aggression and EXCEED it!")
             else:
-                analysis.append("   ⚔️ COMPETITOR STRATEGY: Standard competitive response")
+                analysis.append("   ⚔️ ENEMY STRATEGY: Standard competitive response - Perfect for exploitation!")
                 
             if revenge_mode:
-                analysis.append("   😈 WARNING: COMPETITOR IN REVENGE MODE! Expect relentless attacks!")
+                analysis.append("   😈 ENEMY IN REVENGE MODE: They're emotional = EXPLOITABLE!")
                 
             for reaction in competitor_reactions:
                 analysis.append(f"      🎯 {reaction}")
             analysis.append("")
+        elif competitor_weakening:
+            analysis.append("🏆 NO ENEMY MOVES: They're RETREATING! PURSUE AND DESTROY!")
+            analysis.append("")
+        elif current_day - self.last_day_made_pricing_move > 1 and competitor_reactions == []:
+            analysis.append("⚠️ DANGEROUS STALEMATE: Neither side is attacking - BREAK THE DEADLOCK!")
+            analysis.append("   🔥 Warlords CREATE opportunities, they don't wait for them!")
+            analysis.append("")
         
-        # Price war intensity analysis
+        # 🏆 WARLORD WAR INTENSITY ASSESSMENT 🏆
         if price_war_intensity >= 8:
-            analysis.append("🔥 MAXIMUM WARFARE! Competitor is in full battle mode - time for devastating counter-attacks!")
+            analysis.append("🌋 TOTAL WAR MODE! This is where WARLORDS are forged - DOMINATE OR DIE!")
+            analysis.append("   💀 No mercy, no quarter - CRUSH them into dust!")
         elif price_war_intensity >= 5:
-            analysis.append("⚔️ HEATED BATTLE! Competitor is fighting hard - deploy aggressive pricing tactics!")
+            analysis.append("⚔️ BATTLE ROYALE! The enemy bleeds - PRESS THE ATTACK!")
+            analysis.append("   🔥 Victory is within reach - SEIZE IT!")
         elif price_war_intensity >= 3:
-            analysis.append("🥊 MODERATE PRESSURE! Competitor is responding - increase competitive edge!")
+            analysis.append("🥊 ACTIVE WARFARE! They're fighting back - TIME TO ESCALATE!")
+            analysis.append("   💪 Show them what a TRUE predator looks like!")
         elif price_war_intensity > 0:
-            analysis.append("👀 COMPETITIVE TENSION! Competitor is watching - be strategic!")
+            analysis.append("👁️ ENEMY STIRRING! They're testing you - SHOW NO WEAKNESS!")
+        else:
+            analysis.append("😴 DANGEROUS PEACE! The enemy is plotting - STRIKE FIRST!")
         
         # Add inventory urgency assessment at the start
         stockout_products = [name for name, qty in store_status['inventory'].items() if qty == 0]
@@ -356,21 +472,34 @@ EXECUTE COMPLETE STRATEGY - BOTH INVENTORY AND PRICING:
             units_sold = yesterday_summary.get('units_sold', 0)
             analysis.append(f"\n💰 YESTERDAY'S RESULTS: ${profit:.2f} profit, ${revenue:.2f} revenue, {units_sold} units sold")
             
-            # Strategic advice based on performance and competitive pressure
+            # 🏆 WARLORD VICTORY ASSESSMENT 🏆
             if price_war_intensity >= 5 and profit < 15:
-                analysis.append("🚨 UNDER ATTACK! Competitor pressure is hurting profits - launch aggressive counter-offensive!")
+                analysis.append("⚔️ WOUNDED BUT NOT BEATEN! Time to turn pain into FURY - ESCALATE!")
+                analysis.append("   💀 Low profits mean the enemy draws blood - MAKE THEM PAY DEARLY!")
             elif price_war_intensity >= 5 and profit > 20:
-                analysis.append("💪 WINNING THE WAR! Maintain aggressive stance - you're dominating!")
+                analysis.append("👑 DOMINATING THE BATTLEFIELD! You're a WARLORD in action!")
+                analysis.append("   🔥 High profits during war = TOTAL SUPERIORITY! Keep crushing them!")
             elif competitor_reactions and profit > yesterday_summary.get('previous_profit', profit):
-                analysis.append("🎯 COMPETITOR REACTIONS BACKFIRED! Your strategy is working - press the advantage!")
+                analysis.append("🎯 ENEMY DESPERATION TACTICS FAILED! Your supremacy grows!")
+                analysis.append("   💪 They're breaking under pressure - FINISH THEM!")
             elif profit < 10:
-                analysis.append("⚠️ LOW PROFIT! Try more aggressive undercutting to boost volume!")
+                analysis.append("🚨 UNACCEPTABLE PERFORMANCE! Warlords don't accept poverty!")
+                analysis.append("   🔥 SLASH PRICES, STEAL CUSTOMERS, DOMINATE THE MARKET!")
             elif profit > 25:
-                analysis.append("🎯 EXCELLENT PROFIT! Consider testing slightly higher prices!")
+                analysis.append("💰 EXCELLENT CONQUEST! You're bleeding them dry!")
+                analysis.append("   👑 This is what market domination looks like - EXPAND THE EMPIRE!")
             elif units_sold < 15:
-                analysis.append("📉 LOW VOLUME! Need more competitive prices to attract customers!")
+                analysis.append("📉 WEAK CUSTOMER THEFT! You're not taking enough from the enemy!")
+                analysis.append("   ⚔️ AGGRESSIVE PRICING REQUIRED - steal their entire customer base!")
             elif units_sold > 25:
-                analysis.append("📈 HIGH VOLUME! You're stealing customers - great strategy!")
+                analysis.append("🏆 CUSTOMER CONQUEST SUCCESS! You're draining their lifeblood!")
+                analysis.append("   🔥 High volume = market domination - this is how empires are built!")
+            
+            # Anti-turtling final push
+            if self.consecutive_passive_days >= 1:
+                analysis.append(f"\n🚨 WARLORD WARNING: {self.consecutive_passive_days} day(s) without pricing moves!")
+                analysis.append("   ⚔️ EVERY DAY OF PASSIVITY IS A DAY THE ENEMY RECOVERS!")
+                analysis.append("   👑 CHAMPIONS ATTACK DAILY - BE RELENTLESS!")
         
         return "\n".join(analysis)
     

@@ -245,7 +245,7 @@ class StoreSimulation:
             if not decisions.get("prices") and not decisions.get("orders"):
                 console.print("🤖 [italic]Scrooge decided not to make any changes today.[/italic]")
         except Exception as e:
-            console.print(f"❌ [bold red]Scrooge is having a moment of weakness:[/bold red] {e}")
+            console.print(f"❌ [bold red]Scrooge is having a moment of weakness:[/bold red] {e}")  
             console.print("⚙️ [bold yellow]Using fallback ordering... Bah, humbug![/bold yellow]")
             decisions = {"orders": {}, "prices": {}}
         
