@@ -179,7 +179,14 @@ class StoreSimulation:
         self.previous_prices = current_prices
         
         console.print(table)
+        
+        # 🏭 Phase 1D: Supply Chain Intelligence Panel
+        self.display_supply_chain_status(status)
+        
         console.print(f"💰 Cash Balance: ${status['cash']:.2f}")
+        if status.get('accounts_payable', 0) > 0:
+            console.print(f"💳 Accounts Payable (NET-30): ${status['accounts_payable']:.2f}")
+        
         if status['stockouts']:
             console.print(f"🚨 CRITICAL STOCKOUTS: {', '.join(status['stockouts'])}")
         
@@ -190,6 +197,30 @@ class StoreSimulation:
             console.print(f"📈 Yesterday: [bold {profit_color}]${last_summary['profit']:.2f} profit[/bold {profit_color}], {last_summary['units_sold']} units sold")
         
         console.print()
+    
+    def display_supply_chain_status(self, status):
+        """🏭 Phase 1D: Display supply chain and delivery intelligence"""
+        pending_deliveries = status.get('pending_deliveries', [])
+        
+        if pending_deliveries:
+            console.print("\n🚚 [bold blue]INCOMING DELIVERIES:[/bold blue]")
+            
+            # Group deliveries by arrival day
+            delivery_groups = {}
+            for delivery in pending_deliveries:
+                days_remaining = delivery['days_remaining']
+                arrival_key = "📦 TOMORROW" if days_remaining <= 1 else f"📅 {days_remaining} DAYS"
+                
+                if arrival_key not in delivery_groups:
+                    delivery_groups[arrival_key] = []
+                delivery_groups[arrival_key].append(delivery)
+            
+            for arrival_time, deliveries in sorted(delivery_groups.items()):
+                console.print(f"  {arrival_time}:")
+                for delivery in deliveries:
+                    console.print(f"    • {delivery['quantity']} {delivery['product']} from {delivery['supplier']} (${delivery['total_cost']:.2f})")
+        else:
+            console.print("\n🚚 [italic]No pending deliveries - supply chain is clear[/italic]")
     
     def run_single_day(self):
         """Run a single day of business"""
@@ -264,14 +295,37 @@ class StoreSimulation:
         # 🔥 ULTRA-ENHANCED COMPETITOR INTELLIGENCE DISPLAY 🔥
         self.display_competitor_warfare(day_summary)
         
+        # 🏭 Phase 1D: Display delivery results
+        if day_summary.get('deliveries'):
+            console.print("\n🚚 [bold green]DELIVERY RESULTS:[/bold green]")
+            for delivery in day_summary['deliveries']:
+                if delivery['success']:
+                    console.print(f"✅ {delivery['message']}", style="green")
+                else:
+                    console.print(f"❌ {delivery['message']}", style="red")
+        
+        # 💰 Phase 1D: Display payment obligations
+        if day_summary.get('payment_status') and day_summary['payment_status'].get('message'):
+            payment_msg = day_summary['payment_status']['message']
+            if day_summary['payment_status'].get('success', True):
+                console.print(f"💰 {payment_msg}", style="green")
+            else:
+                console.print(f"⚠️  {payment_msg}", style="yellow")
+
         # Display day results
+        supply_chain_info = ""
+        if day_summary.get('pending_deliveries', 0) > 0:
+            supply_chain_info += f"\n🚚 Pending Deliveries: {day_summary['pending_deliveries']}"
+        if day_summary.get('accounts_payable', 0) > 0:
+            supply_chain_info += f"\n💳 Accounts Payable: ${day_summary['accounts_payable']:.2f}"
+        
         console.print(Panel(
             f"""
 💰 Revenue: ${day_summary['revenue']:.2f}
 📈 Profit: ${day_summary['profit']:.2f}
 🛒 Units Sold: {day_summary['units_sold']}
 💵 Cash Balance: ${day_summary['cash_balance']:.2f}
-📦 Inventory: {day_summary['inventory_status']}
+📦 Inventory: {day_summary['inventory_status']}{supply_chain_info}
 """,
             title=f"Day {day_summary['day']-1} Accounting",
             border_style="green"

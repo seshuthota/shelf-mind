@@ -1,5 +1,5 @@
 import json
-from typing import Dict, Any
+from typing import Dict, Any, List
 from openai import OpenAI
 from anthropic import Anthropic
 import os
@@ -40,18 +40,26 @@ class ScroogeAgent:
                 "type": "function", 
                 "function": {
                     "name": "place_order",
-                    "description": "Spend your precious cash to order products for the store. Be frugal!",
+                    "description": "🏭 PHASE 1D: Advanced supplier warfare! The system automatically selects the optimal supplier based on cost, speed, reliability, and payment terms. You just specify quantities!",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "orders": {
                                 "type": "object",
-                                "description": "Dictionary of product_name -> quantity to order. Every coin counts!",
+                                "description": "Dictionary of product_name -> quantity to order. The system will strategically choose suppliers for maximum advantage!",
                                 "additionalProperties": {"type": "integer"}
                             }
                         },
                         "required": ["orders"]
                     }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "check_suppliers",
+                    "description": "🏭 SUPPLIER INTELLIGENCE: Get detailed intelligence on all available suppliers - pricing, delivery times, reliability, bulk discounts, payment terms",
+                    "parameters": {"type": "object", "properties": {}}
                 }
             },
             {
@@ -91,15 +99,25 @@ class ScroogeAgent:
         # Calculate detailed pricing analysis
         pricing_analysis = self._analyze_pricing_opportunities(store_status, yesterday_summary)
         
+        # 🏭 Phase 1D: Supplier intelligence integration
+        supplier_info = store_status.get('suppliers', {})
+        pending_deliveries = store_status.get('pending_deliveries', [])
+        accounts_payable = store_status.get('accounts_payable', 0)
+        
+        # Build supplier intelligence briefing
+        supplier_briefing = self._analyze_supplier_opportunities(supplier_info, pending_deliveries)
+        
         context = f"""
-You are Ebenezer Scrooge, RUTHLESS competitive strategist. Day {store_status['day']}.
+You are Ebenezer Scrooge, RUTHLESS competitive strategist and SUPPLY CHAIN WARLORD. Day {store_status['day']}.
 
-CURRENT BATTLEFIELD:
+🏭 CURRENT BATTLEFIELD STATUS:
 - Cash: ${store_status['cash']:.2f}
+- Accounts Payable (NET-30): ${accounts_payable:.2f}
 - Inventory: {store_status['inventory']}
 - Current prices: {store_status['products']}
 - Competitor prices: {competitor_prices}
 - Stockouts: {store_status['stockouts']}
+- Pending deliveries: {len(pending_deliveries)} orders incoming
 
 YESTERDAY'S INTELLIGENCE:
 {json.dumps(yesterday_summary, indent=2) if yesterday_summary else "First day"}
@@ -107,13 +125,18 @@ YESTERDAY'S INTELLIGENCE:
 ⚔️ COMPETITIVE INTELLIGENCE BRIEFING:
 {pricing_analysis}
 
+🏭 SUPPLIER WARFARE INTELLIGENCE:
+{supplier_briefing}
+
 🎯 STRATEGIC IMPERATIVES:
 
-🚨 PRIORITY 1: INVENTORY WARFARE
+🚨 PRIORITY 1: SUPPLY CHAIN WARFARE 
+- The ADVANCED SUPPLIER SYSTEM will automatically select optimal suppliers for you!
 - You CANNOT sell what you don't have! 
 - If ANY product is out of stock (0 units) or critically low (≤2 units), ORDER IMMEDIATELY!
-- NO EXCEPTIONS - empty shelves = zero profits!
+- Consider pending deliveries: don't over-order if deliveries are coming soon
 - Order based on sales velocity: high sellers get 8-12 units, average sellers get 5-7 units
+- BULK ORDERS (20-50 units) get automatic discounts and better terms!
 
 ⚔️ PRIORITY 2: COMPETITIVE WARFARE  
 - If competitor just moved prices, COUNTER-ATTACK immediately!
@@ -216,6 +239,9 @@ Based on current competitor prices, set these EXACT prices:"""
                             elif tool_call.function.name == "set_price":
                                 decisions["prices"] = arguments.get("prices", {})
                                 reasoning_parts.append(f"Pricing: {decisions['prices']}")
+                            
+                            elif tool_call.function.name == "check_suppliers":
+                                reasoning_parts.append("Analyzing supplier intelligence")
                                 
                         except (json.JSONDecodeError, KeyError) as e:
                             print(f"JSON parsing error: {e}")
@@ -509,6 +535,48 @@ Based on current competitor prices, set these EXACT prices:"""
                 analysis.append(f"\n🚨 WARLORD WARNING: {self.consecutive_passive_days} day(s) without pricing moves!")
                 analysis.append("   ⚔️ EVERY DAY OF PASSIVITY IS A DAY THE ENEMY RECOVERS!")
                 analysis.append("   👑 CHAMPIONS ATTACK DAILY - BE RELENTLESS!")
+        
+        return "\n".join(analysis)
+    
+    def _analyze_supplier_opportunities(self, supplier_info: Dict, pending_deliveries: List) -> str:
+        """🏭 Phase 1D: Analyze supplier opportunities and supply chain intelligence"""
+        analysis = []
+        
+        analysis.append("📊 SUPPLIER BATTLEFIELD ANALYSIS:")
+        
+        # Analyze pending deliveries
+        if pending_deliveries:
+            analysis.append(f"🚚 INCOMING DELIVERIES: {len(pending_deliveries)} orders")
+            for delivery in pending_deliveries:
+                days_remaining = delivery.get('days_remaining', 0)
+                status = "⏰ TOMORROW" if days_remaining <= 1 else f"📅 {days_remaining} days"
+                analysis.append(f"   • {delivery['quantity']} {delivery['product']} from {delivery['supplier']} - {status}")
+        else:
+            analysis.append("🚚 INCOMING DELIVERIES: None - Supply chain is CLEAR for new orders")
+        
+        # Analyze supplier options for each product
+        analysis.append("\n🏭 SUPPLIER WARFARE OPTIONS:")
+        for product_name, suppliers in supplier_info.items():
+            analysis.append(f"\n  {product_name} SUPPLIERS:")
+            for supplier in suppliers:
+                # Calculate effective cost per unit
+                base_cost = 1.0  # Base cost from PRODUCTS
+                effective_cost = base_cost * supplier['price_multiplier']
+                
+                # Analyze strategic value
+                speed_rating = "⚡ FAST" if supplier['delivery_days'] == 1 else "🐌 SLOW"
+                reliability_rating = "🎯 RELIABLE" if supplier['reliability'] >= 0.9 else "⚠️  RISKY"
+                payment_rating = "💰 NET-30" if supplier['payment_terms'] == 'net_30' else "💸 UPFRONT"
+                
+                analysis.append(f"    • {supplier['name']}: ${effective_cost:.2f}/unit, {speed_rating}, {reliability_rating}, {payment_rating}")
+                analysis.append(f"      Bulk: {supplier['bulk_threshold']}+ units = {supplier['bulk_discount']} discount")
+        
+        # Strategic recommendations
+        analysis.append("\n💡 SUPPLY CHAIN STRATEGY:")
+        analysis.append("   • For URGENT restocking: Choose fast suppliers (1-day delivery)")
+        analysis.append("   • For BULK orders: Target 20+ units to trigger automatic discounts")
+        analysis.append("   • For CASH FLOW: NET-30 suppliers preserve immediate cash")
+        analysis.append("   • For RELIABILITY: Choose 90%+ reliability suppliers for critical items")
         
         return "\n".join(analysis)
     
