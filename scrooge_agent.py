@@ -103,6 +103,37 @@ class ScroogeAgent:
                     "description": "🌍 Phase 2B: Check current season, weather, holidays, and economic conditions affecting product demand!",
                     "parameters": {"type": "object", "properties": {}}
                 }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "check_crisis_status",
+                    "description": "🚨 Phase 2C: Check active supply chain crises, supplier disruptions, and emergency response options!",
+                    "parameters": {"type": "object", "properties": {}}
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "execute_emergency_action",
+                    "description": "⚡ Phase 2C: Execute emergency response actions during supply chain crises (emergency restock, loans, competitor intelligence)",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "action_type": {
+                                "type": "string",
+                                "description": "Type of emergency action: 'emergency_restock', 'take_loan', 'competitor_intelligence', 'switch_supplier'",
+                                "enum": ["emergency_restock", "take_loan", "competitor_intelligence", "switch_supplier"]
+                            },
+                            "parameters": {
+                                "type": "object",
+                                "description": "Action-specific parameters (e.g., product_name and quantity for emergency_restock)",
+                                "additionalProperties": True
+                            }
+                        },
+                        "required": ["action_type"]
+                    }
+                }
             }
         ]
     
@@ -122,6 +153,10 @@ class ScroogeAgent:
         
         # Build supplier intelligence briefing
         supplier_briefing = self._analyze_supplier_opportunities(supplier_info, pending_deliveries)
+        
+        # 🚨 Phase 2C: Crisis management briefing
+        crisis_info = store_status.get('crisis_status', {})
+        crisis_briefing = self._analyze_crisis_status(crisis_info)
         
         context = f"""
 You are Ebenezer Scrooge, a master of business warfare. Today is Day {store_status['day']}.
@@ -145,6 +180,9 @@ You are Ebenezer Scrooge, a master of business warfare. Today is Day {store_stat
 
 **4. Supply Chain Intelligence:**
 {supplier_briefing}
+
+**5. 🚨 CRISIS MANAGEMENT STATUS:**
+{crisis_briefing}
 
 --- WARLORD'S STRATEGIC DOCTRINE ---
 
@@ -654,4 +692,80 @@ Set these exact prices using the `set_price` tool. This is not a suggestion.
         for decision in self.memory[-3:]:  # Last 3 decisions
             summary += f"Day {decision['day']}: {decision['decision']} - {decision['reasoning'][:100]}...\n"
         
-        return summary 
+        return summary
+    
+    def _analyze_crisis_status(self, crisis_info: Dict) -> str:
+        """🚨 Phase 2C: Analyze active crises and provide emergency response intelligence"""
+        
+        active_crises = crisis_info.get('active_crises', [])
+        emergency_actions = crisis_info.get('emergency_actions', [])
+        crisis_costs = crisis_info.get('daily_crisis_costs', 0)
+        
+        if not active_crises:
+            return "✅ NO ACTIVE CRISES - All supply chains operating normally."
+        
+        analysis = []
+        analysis.append("🚨 ACTIVE SUPPLY CHAIN CRISES:")
+        
+        # Analyze each active crisis
+        total_severity = 0
+        for crisis in active_crises:
+            crisis_type = crisis.get('crisis_type', 'unknown')
+            severity = crisis.get('severity', 0)
+            remaining_days = crisis.get('remaining_days', 0)
+            description = crisis.get('description', 'Unknown crisis')
+            
+            total_severity += severity
+            
+            # Severity indicator
+            if severity >= 0.8:
+                severity_icon = "🔥 CRITICAL"
+            elif severity >= 0.6:
+                severity_icon = "⚠️ HIGH"
+            elif severity >= 0.4:
+                severity_icon = "🟡 MEDIUM"
+            else:
+                severity_icon = "🟢 LOW"
+            
+            analysis.append(f"  {severity_icon}: {description} ({remaining_days} days remaining)")
+            
+            # Show affected products/suppliers
+            affected_products = crisis.get('affected_products', [])
+            affected_suppliers = crisis.get('affected_suppliers', [])
+            
+            if affected_products:
+                analysis.append(f"    └─ Affected Products: {', '.join(affected_products)}")
+            if affected_suppliers:
+                analysis.append(f"    └─ Affected Suppliers: {', '.join(affected_suppliers)}")
+        
+        # Overall crisis threat level
+        avg_severity = total_severity / len(active_crises) if active_crises else 0
+        if avg_severity >= 0.7:
+            threat_level = "🔥 CRITICAL THREAT LEVEL"
+        elif avg_severity >= 0.5:
+            threat_level = "⚠️ HIGH THREAT LEVEL"
+        elif avg_severity >= 0.3:
+            threat_level = "🟡 MODERATE THREAT LEVEL"
+        else:
+            threat_level = "🟢 LOW THREAT LEVEL"
+        
+        analysis.append(f"\n{threat_level} - {len(active_crises)} active crisis(es)")
+        
+        # Daily crisis costs
+        if crisis_costs > 0:
+            analysis.append(f"💰 Daily Crisis Costs: ${crisis_costs:.2f}")
+        
+        # Emergency response options
+        if emergency_actions:
+            analysis.append(f"\n⚡ EMERGENCY ACTIONS AVAILABLE:")
+            for action in emergency_actions[:3]:  # Show top 3 actions
+                action_name = action.get('name', 'Unknown')
+                action_cost = action.get('cost', 'Unknown cost')
+                analysis.append(f"  • {action_name} ({action_cost})")
+            
+            if len(emergency_actions) > 3:
+                analysis.append(f"  • ... and {len(emergency_actions) - 3} more emergency options")
+            
+            analysis.append("  💡 Use `check_crisis_status` and `execute_emergency_action` tools for crisis management!")
+        
+        return "\n".join(analysis) 

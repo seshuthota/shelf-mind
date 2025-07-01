@@ -8,6 +8,7 @@ from customer_engine import CustomerEngine
 from competitor_engine import CompetitorEngine
 from supplier_engine import SupplierEngine
 from market_events_engine import MarketEventsEngine
+from crisis_engine import CrisisEngine
 
 
 class StoreEngine:
@@ -49,6 +50,7 @@ class StoreEngine:
         self.competitor_engine = CompetitorEngine()
         self.supplier_engine = SupplierEngine()
         self.market_events_engine = MarketEventsEngine()  # Phase 2B: Seasonal demand & market events
+        self.crisis_engine = CrisisEngine()  # Phase 2C: Crisis management & supply chain disruptions
         
     def process_spoilage(self) -> List[SpoilageReport]:
         """🍌 Phase 2A: Process daily spoilage for fresh and frozen items"""
@@ -104,8 +106,8 @@ class StoreEngine:
         return customers
     
     def process_orders(self, orders: Dict[str, int]) -> Dict[str, str]:
-        """🏭 Phase 2A: Enhanced supplier ordering with batch creation"""
-        return self.supplier_engine.process_orders(orders, self.state)
+        """🏭 Phase 2C: Enhanced supplier ordering with crisis management"""
+        return self.supplier_engine.process_orders(orders, self.state, self.crisis_engine)
         
     def add_inventory_batch(self, product_name: str, quantity: int, delivery_day: int):
         """🚚 Phase 2A: Add new inventory batch with expiration tracking"""
@@ -149,6 +151,13 @@ class StoreEngine:
         
         return results
     
+    def execute_emergency_action(self, action_type: str, parameters: Dict = None) -> Dict:
+        """🚨 Phase 2C: Execute emergency response actions during crises"""
+        if parameters is None:
+            parameters = {}
+            
+        return self.crisis_engine.execute_emergency_action(action_type, parameters, self.state)
+    
     def end_day(self) -> Dict:
         """🌅 Phase 2A: Enhanced end-of-day processing with spoilage"""
         # Process spoilage BEFORE calculating profits
@@ -173,8 +182,8 @@ class StoreEngine:
         self.state.total_revenue += daily_revenue
         self.state.total_profit += daily_profit
         
-        # 🚚 Phase 1D: Process incoming deliveries (with batch creation)
-        delivery_results = self.supplier_engine.process_deliveries(self.state)
+        # 🚚 Phase 2C: Process incoming deliveries with crisis effects
+        delivery_results = self.supplier_engine.process_deliveries(self.state, self.crisis_engine)
         
         # Add delivered items as new batches
         for delivery in delivery_results.get('successful_deliveries', []):
@@ -196,6 +205,15 @@ class StoreEngine:
         
         # Get market conditions for this day
         market_event = self.market_events_engine.get_market_conditions(self.state.day)
+        
+        # 🚨 Phase 2C: Process crisis events and emergency responses
+        # Generate new crisis events based on market conditions
+        new_crises = self.crisis_engine.generate_crisis_events(self.state.day, self.state, market_event)
+        self.state.active_crises.extend(new_crises)
+        
+        # Update existing crises and apply costs
+        crisis_updates = self.crisis_engine.update_active_crises(self.state)
+        self.state.cash -= crisis_updates["crisis_costs"]  # Apply daily crisis costs
         
         day_summary = {
             "day": self.state.day,
@@ -228,7 +246,28 @@ class StoreEngine:
             "deliveries": delivery_results,
             "pending_deliveries": len(self.state.pending_deliveries),
             "accounts_payable": self.state.accounts_payable,
-            "payment_status": payment_status
+            "payment_status": payment_status,
+            # Phase 2C: Crisis management
+            "crisis_events": {
+                "new_crises": [
+                    {
+                        "crisis_type": crisis.crisis_type.value,
+                        "severity": crisis.severity,
+                        "remaining_days": crisis.remaining_days,
+                        "description": crisis.description,
+                        "affected_products": crisis.affected_products,
+                        "affected_suppliers": crisis.affected_suppliers
+                    } for crisis in new_crises
+                ],
+                "resolved_crises": [
+                    {
+                        "crisis_type": crisis.crisis_type.value,
+                        "description": crisis.description
+                    } for crisis in crisis_updates["resolved_crises"]
+                ],
+                "daily_crisis_costs": crisis_updates["crisis_costs"],
+                "active_crisis_count": len(self.state.active_crises)
+            }
         }
         
         # Reset for next day
@@ -272,7 +311,26 @@ class StoreEngine:
             # Phase 1D: Supply chain intelligence
             "suppliers": self.supplier_engine.get_supplier_info(),
             "pending_deliveries": self.supplier_engine.get_pending_deliveries_summary(self.state),
-            "accounts_payable": self.state.accounts_payable
+            "accounts_payable": self.state.accounts_payable,
+            # Phase 2C: Crisis management status
+            "crisis_status": {
+                "active_crises": [
+                    {
+                        "crisis_type": crisis.crisis_type.value,
+                        "severity": crisis.severity,
+                        "remaining_days": crisis.remaining_days,
+                        "description": crisis.description,
+                        "affected_products": crisis.affected_products,
+                        "affected_suppliers": crisis.affected_suppliers
+                    } for crisis in self.state.active_crises
+                ],
+                "emergency_actions": self.crisis_engine.get_emergency_actions(self.state),
+                "daily_crisis_costs": sum(
+                    self.crisis_engine._calculate_daily_crisis_cost(crisis, self.state) 
+                    for crisis in self.state.active_crises
+                ),
+                "crisis_response_cash": self.state.crisis_response_cash
+            }
         }
     
     # Convenience properties to maintain compatibility with existing code

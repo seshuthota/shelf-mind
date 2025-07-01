@@ -3,6 +3,39 @@ from typing import Dict, List, Optional
 from datetime import datetime
 from enum import Enum
 
+# Phase 2C: Crisis Management & Supply Chain Disruptions
+class CrisisType(str, Enum):
+    NONE = "none"
+    SUPPLIER_BANKRUPTCY = "supplier_bankruptcy"
+    SUPPLY_SHORTAGE = "supply_shortage"
+    DELIVERY_DISRUPTION = "delivery_disruption"
+    REGULATORY_CRISIS = "regulatory_crisis"
+    ECONOMIC_SHOCK = "economic_shock"
+    RAW_MATERIAL_SPIKE = "raw_material_spike"
+    COMPETITIVE_DISRUPTION = "competitive_disruption"
+
+class EmergencyAction(str, Enum):
+    EMERGENCY_RESTOCK = "emergency_restock"  # Pay premium for immediate delivery
+    SWITCH_SUPPLIER = "switch_supplier"      # Emergency supplier change
+    RAISE_PRICES = "raise_prices"           # Emergency price increases
+    LIQUIDATE_INVENTORY = "liquidate_inventory"  # Emergency clearance sale
+    TAKE_LOAN = "take_loan"                 # Emergency cash injection
+    COMPETITOR_INTELLIGENCE = "competitor_intelligence"  # Spy on competitor vulnerabilities
+
+class CrisisEvent(BaseModel):
+    """Crisis event affecting store operations"""
+    crisis_type: CrisisType
+    affected_products: List[str] = []  # Products affected by this crisis
+    affected_suppliers: List[str] = []  # Suppliers affected by this crisis
+    severity: float  # 0.0-1.0, how severe the crisis is
+    duration_days: int  # How many days the crisis lasts
+    remaining_days: int  # Days remaining
+    cost_multiplier: float = 1.0  # Cost increase multiplier
+    delivery_delay_multiplier: float = 1.0  # Delivery delay multiplier
+    reliability_penalty: float = 0.0  # Reliability reduction (0.0-1.0)
+    description: str
+    emergency_actions_available: List[str] = []  # Available emergency responses
+
 # Phase 1C: Customer Type System
 class CustomerType(str, Enum):
     PRICE_SENSITIVE = "price_sensitive"
@@ -127,6 +160,10 @@ class StoreState(BaseModel):
     # Phase 1D: Supplier tracking
     pending_deliveries: List[DeliveryOrder] = []
     accounts_payable: float = 0.0  # Outstanding NET_30 payments
+    # Phase 2C: Crisis Management
+    active_crises: List[CrisisEvent] = []  # Current active crisis events
+    crisis_response_cash: float = 0.0  # Emergency funds from loans/responses
+    regulatory_compliance_cost: float = 0.0  # Daily compliance costs from regulatory crises
 
 class CustomerPurchase(BaseModel):
     products: List[str]
@@ -466,4 +503,4 @@ class MarketEvent(BaseModel):
     description: str
     demand_multiplier: float  # Overall market demand modifier
 
-# Phase 2A: Product Categories and Spoilage 
+# Crisis-related models are now defined above before StoreState 

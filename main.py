@@ -183,6 +183,9 @@ class StoreSimulation:
         # 🏭 Phase 1D: Supply Chain Intelligence Panel
         self.display_supply_chain_status(status)
         
+        # 🚨 Phase 2C: Crisis Management Status Panel
+        self.display_crisis_status(status)
+        
         console.print(f"💰 Cash Balance: ${status['cash']:.2f}")
         if status.get('accounts_payable', 0) > 0:
             console.print(f"💳 Accounts Payable (NET-30): ${status['accounts_payable']:.2f}")
@@ -238,6 +241,138 @@ class StoreSimulation:
                     console.print(f"    • {delivery['quantity']} {delivery['product']} from {delivery['supplier']} (${delivery['total_cost']:.2f})")
         else:
             console.print("\n🚚 [italic]No pending deliveries - supply chain is clear[/italic]")
+    
+    def display_crisis_status(self, status):
+        """🚨 Phase 2C: Display active crisis events and emergency response options"""
+        crisis_status = status.get('crisis_status', {})
+        active_crises = crisis_status.get('active_crises', [])
+        emergency_actions = crisis_status.get('emergency_actions', [])
+        daily_crisis_costs = crisis_status.get('daily_crisis_costs', 0)
+        
+        if not active_crises and daily_crisis_costs == 0:
+            console.print("✅ [bold green]SUPPLY CHAIN STATUS: All systems operational[/bold green]")
+            return
+        
+        if active_crises:
+            console.print("🚨 [bold red]ACTIVE CRISIS EVENTS:[/bold red]")
+            
+            total_severity = 0
+            for crisis in active_crises:
+                severity = crisis.get('severity', 0)
+                total_severity += severity
+                remaining_days = crisis.get('remaining_days', 0)
+                description = crisis.get('description', 'Unknown crisis')
+                
+                # Severity indicator
+                if severity >= 0.8:
+                    severity_icon = "🔥"
+                    severity_style = "bold red"
+                elif severity >= 0.6:
+                    severity_icon = "⚠️"
+                    severity_style = "yellow"
+                elif severity >= 0.4:
+                    severity_icon = "🟡"
+                    severity_style = "yellow"
+                else:
+                    severity_icon = "🟢"
+                    severity_style = "green"
+                
+                console.print(f"   {severity_icon} [{severity_style}]{description}[/{severity_style}] ({remaining_days} days remaining)")
+                
+                # Show affected products/suppliers
+                affected_products = crisis.get('affected_products', [])
+                affected_suppliers = crisis.get('affected_suppliers', [])
+                
+                if affected_products:
+                    console.print(f"      └─ Products: {', '.join(affected_products)}")
+                if affected_suppliers:
+                    console.print(f"      └─ Suppliers: {', '.join(affected_suppliers)}")
+            
+            # Overall threat assessment
+            avg_severity = total_severity / len(active_crises)
+            if avg_severity >= 0.7:
+                threat_level = "🔥 [bold red]CRITICAL THREAT LEVEL[/bold red]"
+            elif avg_severity >= 0.5:
+                threat_level = "⚠️ [bold yellow]HIGH THREAT LEVEL[/bold yellow]"
+            elif avg_severity >= 0.3:
+                threat_level = "🟡 [yellow]MODERATE THREAT LEVEL[/yellow]"
+            else:
+                threat_level = "🟢 [green]LOW THREAT LEVEL[/green]"
+            
+            console.print(f"\n   {threat_level} - {len(active_crises)} active crisis(es)")
+        
+        # Show daily crisis costs
+        if daily_crisis_costs > 0:
+            console.print(f"💰 [bold red]Daily Crisis Costs: ${daily_crisis_costs:.2f}[/bold red]")
+        
+        # Show emergency actions
+        if emergency_actions:
+            console.print("\n⚡ [bold cyan]EMERGENCY ACTIONS AVAILABLE:[/bold cyan]")
+            for action in emergency_actions[:3]:  # Show top 3 actions
+                action_name = action.get('name', 'Unknown')
+                action_cost = action.get('cost', 'Unknown cost')
+                console.print(f"   • {action_name} ({action_cost})")
+            
+            if len(emergency_actions) > 3:
+                console.print(f"   • ... and {len(emergency_actions) - 3} more emergency options")
+            
+            console.print("   💡 [italic]Use 'check_crisis_status' and 'execute_emergency_action' tools for crisis management![/italic]")
+    
+    def display_crisis_events(self, day_summary):
+        """🚨 Phase 2C: Display crisis events that occurred during the day"""
+        crisis_events = day_summary.get('crisis_events', {})
+        new_crises = crisis_events.get('new_crises', [])
+        resolved_crises = crisis_events.get('resolved_crises', [])
+        daily_crisis_costs = crisis_events.get('daily_crisis_costs', 0)
+        active_crisis_count = crisis_events.get('active_crisis_count', 0)
+        
+        if not new_crises and not resolved_crises and daily_crisis_costs == 0:
+            return
+        
+        # Display new crises
+        if new_crises:
+            console.print("\n🚨 [bold red]NEW CRISIS EVENTS:[/bold red]")
+            for crisis in new_crises:
+                severity = crisis.get('severity', 0)
+                description = crisis.get('description', 'Unknown crisis')
+                remaining_days = crisis.get('remaining_days', 0)
+                
+                # Severity styling
+                if severity >= 0.8:
+                    style = "bold red"
+                    icon = "🔥"
+                elif severity >= 0.6:
+                    style = "red"
+                    icon = "⚠️"
+                else:
+                    style = "yellow"
+                    icon = "🟡"
+                
+                console.print(f"   {icon} [{style}]{description}[/{style}] ({remaining_days} days duration)")
+                
+                # Show affected items
+                affected_products = crisis.get('affected_products', [])
+                affected_suppliers = crisis.get('affected_suppliers', [])
+                
+                if affected_products:
+                    console.print(f"      └─ Products: {', '.join(affected_products)}")
+                if affected_suppliers:
+                    console.print(f"      └─ Suppliers: {', '.join(affected_suppliers)}")
+        
+        # Display resolved crises
+        if resolved_crises:
+            console.print("\n✅ [bold green]RESOLVED CRISIS EVENTS:[/bold green]")
+            for crisis in resolved_crises:
+                description = crisis.get('description', 'Unknown crisis')
+                console.print(f"   ✅ [green]{description}[/green] - Crisis resolved!")
+        
+        # Display crisis costs
+        if daily_crisis_costs > 0:
+            console.print(f"\n💰 [bold red]Crisis costs today: ${daily_crisis_costs:.2f}[/bold red]")
+        
+        # Display overall crisis status
+        if active_crisis_count > 0:
+            console.print(f"\n⚠️ [yellow]{active_crisis_count} crisis(es) still active[/yellow]")
     
     def run_single_day(self):
         """Run a single day of business"""
@@ -314,6 +449,9 @@ class StoreSimulation:
         
         # 🌍 Phase 2B: Display market conditions
         self.display_market_conditions(day_summary)
+        
+        # 🚨 Phase 2C: Display crisis events
+        self.display_crisis_events(day_summary)
         
         # 🏭 Phase 2A: Display delivery results
         if day_summary.get('deliveries'):
