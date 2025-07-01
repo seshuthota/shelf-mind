@@ -87,6 +87,22 @@ class ScroogeAgent:
                     "description": "Review yesterday's earnings. Did you make a profit or a loss?",
                     "parameters": {"type": "object", "properties": {}}
                 }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "check_spoilage_warnings",
+                    "description": "🍌 Phase 2A: Check for products that are about to spoil! Critical for fresh items like sandwiches (3 days) and bananas (5 days).",
+                    "parameters": {"type": "object", "properties": {}}
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "check_market_conditions",
+                    "description": "🌍 Phase 2B: Check current season, weather, holidays, and economic conditions affecting product demand!",
+                    "parameters": {"type": "object", "properties": {}}
+                }
             }
         ]
     
@@ -136,11 +152,13 @@ Your daily actions are governed by these non-negotiable priorities. Address them
 
 **PRIORITY 1: SUPPLY CHAIN - A Warlord plans for tomorrow's battles.**
 - **Action:** You MUST reorder products when inventory falls below a safety threshold to avoid stockouts. The reorder point is **5 units**.
+- **🍌 SPOILAGE WARFARE:** Fresh products (Sandwiches, Bananas, Ice Cream) SPOIL! Check spoilage warnings and avoid over-ordering perishables.
 - **Considerations:**
     - If inventory is <= 5 units, place an order.
     - Check pending deliveries. Do not over-order if a shipment is arriving soon.
     - Order more of high-selling items (8-12 units) and less of slow-movers (5-7 units).
-    - Exploit bulk discounts (20-50 units) for high-demand products.
+    - **FRESH ITEMS**: Order smaller quantities (3-6 units) due to spoilage risk.
+    - Exploit bulk discounts (20-50 units) for NON-PERISHABLE products only.
 
 **PRIORITY 2: PRICING WARFARE - A Warlord's duty is to attack.**
 - **Action:** You MUST use the `set_price` tool EVERY DAY to maintain market pressure.

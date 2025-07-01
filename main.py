@@ -17,7 +17,7 @@ console = Console()
 
 class StoreSimulation:
     def __init__(self):
-        self.store = StoreEngine(starting_cash=100.0)
+        self.store = StoreEngine(starting_cash=150.0)  # Phase 2A: Increased for 10-product complexity
         self.scrooge = ScroogeAgent(provider="openai")  # Change to "anthropic" if you prefer
         self.day_summaries = []
         self.previous_prices = {}  # Track price changes
@@ -187,14 +187,31 @@ class StoreSimulation:
         if status.get('accounts_payable', 0) > 0:
             console.print(f"💳 Accounts Payable (NET-30): ${status['accounts_payable']:.2f}")
         
+        # Phase 2A: Spoilage warnings
+        spoilage_warnings = status.get('spoilage_warnings', [])
+        if spoilage_warnings:
+            console.print("🍌 [bold red]SPOILAGE ALERTS![/bold red]")
+            for warning in spoilage_warnings:
+                days_text = "TODAY!" if warning['days_until_expiry'] <= 0 else f"{warning['days_until_expiry']} day(s)"
+                console.print(f"   ⚠️ {warning['quantity']} {warning['product']} expires in {days_text}")
+        
         if status['stockouts']:
             console.print(f"🚨 CRITICAL STOCKOUTS: {', '.join(status['stockouts'])}")
         
-        # Show daily performance if available
+        # Show daily performance with spoilage tracking
         if self.day_summaries:
             last_summary = self.day_summaries[-1]
             profit_color = "green" if last_summary['profit'] > 0 else "red"
-            console.print(f"📈 Yesterday: [bold {profit_color}]${last_summary['profit']:.2f} profit[/bold {profit_color}], {last_summary['units_sold']} units sold")
+            spoilage_info = ""
+            if last_summary.get('units_spoiled', 0) > 0:
+                spoilage_cost = last_summary.get('spoilage_cost', 0)
+                spoilage_info = f", 🍌 {last_summary['units_spoiled']} spoiled (-${spoilage_cost:.2f})"
+            console.print(f"📈 Yesterday: [bold {profit_color}]${last_summary['profit']:.2f} profit[/bold {profit_color}], {last_summary['units_sold']} units sold{spoilage_info}")
+        
+        # Phase 2A: Total spoilage cost tracking
+        total_spoilage = status.get('total_spoilage_cost', 0)
+        if total_spoilage > 0:
+            console.print(f"🗑️ Total Spoilage Loss: ${total_spoilage:.2f}")
         
         console.print()
     
@@ -295,14 +312,21 @@ class StoreSimulation:
         # 🔥 ULTRA-ENHANCED COMPETITOR INTELLIGENCE DISPLAY 🔥
         self.display_competitor_warfare(day_summary)
         
-        # 🏭 Phase 1D: Display delivery results
+        # 🌍 Phase 2B: Display market conditions
+        self.display_market_conditions(day_summary)
+        
+        # 🏭 Phase 2A: Display delivery results
         if day_summary.get('deliveries'):
             console.print("\n🚚 [bold green]DELIVERY RESULTS:[/bold green]")
-            for delivery in day_summary['deliveries']:
-                if delivery['success']:
-                    console.print(f"✅ {delivery['message']}", style="green")
-                else:
-                    console.print(f"❌ {delivery['message']}", style="red")
+            deliveries = day_summary['deliveries']
+            
+            # Display successful deliveries
+            for delivery in deliveries.get('successful_deliveries', []):
+                console.print(f"✅ {delivery['message']}", style="green")
+            
+            # Display failed deliveries
+            for delivery in deliveries.get('failed_deliveries', []):
+                console.print(f"❌ {delivery['message']}", style="red")
         
         # 💰 Phase 1D: Display payment obligations
         if day_summary.get('payment_status') and day_summary['payment_status'].get('message'):
@@ -319,13 +343,27 @@ class StoreSimulation:
         if day_summary.get('accounts_payable', 0) > 0:
             supply_chain_info += f"\n💳 Accounts Payable: ${day_summary['accounts_payable']:.2f}"
         
+        # Phase 2A: Display spoilage reports
+        if day_summary.get('spoilage_reports'):
+            console.print("\n🍌 [bold red]SPOILAGE REPORT:[/bold red]")
+            total_spoilage_loss = 0
+            for spoilage in day_summary['spoilage_reports']:
+                console.print(f"   🗑️ {spoilage['quantity']} {spoilage['product']} spoiled (-${spoilage['cost_lost']:.2f})")
+                total_spoilage_loss += spoilage['cost_lost']
+            console.print(f"   💸 [bold red]Total spoilage cost: ${total_spoilage_loss:.2f}[/bold red]")
+
+        # Build spoilage info for summary
+        spoilage_info = ""
+        if day_summary.get('units_spoiled', 0) > 0:
+            spoilage_info = f"\n🍌 Units Spoiled: {day_summary['units_spoiled']} (-${day_summary.get('spoilage_cost', 0):.2f})"
+
         console.print(Panel(
             f"""
 💰 Revenue: ${day_summary['revenue']:.2f}
 📈 Profit: ${day_summary['profit']:.2f}
 🛒 Units Sold: {day_summary['units_sold']}
 💵 Cash Balance: ${day_summary['cash_balance']:.2f}
-📦 Inventory: {day_summary['inventory_status']}{supply_chain_info}
+📦 Inventory: {day_summary['inventory_status']}{supply_chain_info}{spoilage_info}
 """,
             title=f"Day {day_summary['day']-1} Accounting",
             border_style="green"
@@ -563,6 +601,93 @@ class StoreSimulation:
             # Peace... for now
             if hasattr(self.store, 'days_since_last_attack') and self.store.days_since_last_attack >= 3:
                 console.print("😴 [italic green]Competitor seems calm... suspiciously calm...[/italic green]")
+
+    def display_market_conditions(self, day_summary):
+        """🌍 Phase 2B: Display market conditions and seasonal effects"""
+        market_event = day_summary.get('market_event')
+        if not market_event:
+            return
+        
+        console.print("\n🌍 [bold blue]MARKET CONDITIONS:[/bold blue]")
+        
+        # Season and weather display
+        season_icons = {
+            "spring": "🌸",
+            "summer": "☀️",
+            "fall": "🍂", 
+            "winter": "❄️"
+        }
+        
+        weather_icons = {
+            "normal": "🌤️",
+            "heat_wave": "🔥",
+            "cold_snap": "🥶",
+            "rainy_day": "🌧️",
+            "perfect_weather": "☀️"
+        }
+        
+        economic_icons = {
+            "normal": "📊",
+            "boom": "📈",
+            "recession": "📉",
+            "recovery": "🔄"
+        }
+        
+        season_icon = season_icons.get(market_event['season'], "🌍")
+        weather_icon = weather_icons.get(market_event['weather'], "🌤️")
+        economic_icon = economic_icons.get(market_event['economic_condition'], "📊")
+        
+        # Display market conditions
+        console.print(f"   {season_icon} Season: [bold]{market_event['season'].title()}[/bold]")
+        console.print(f"   {weather_icon} Weather: [bold]{market_event['weather'].replace('_', ' ').title()}[/bold]")
+        if market_event['holiday'] != "none":
+            console.print(f"   🎉 Holiday: [bold yellow]{market_event['holiday'].replace('_', ' ').title()}[/bold yellow]")
+        console.print(f"   {economic_icon} Economy: [bold]{market_event['economic_condition'].title()}[/bold]")
+        console.print(f"   📊 Market Demand: [bold cyan]{market_event['demand_multiplier']:.1f}x[/bold cyan]")
+        
+        # Display market description
+        if market_event.get('description'):
+            console.print(f"   📝 [italic]{market_event['description']}[/italic]")
+        
+        # Seasonal product insights
+        self.display_seasonal_insights(market_event)
+    
+    def display_seasonal_insights(self, market_event):
+        """🎯 Phase 2B: Display seasonal insights for product demand"""
+        # Import here to avoid circular import
+        from market_events_engine import MarketEventsEngine
+        from models import PRODUCTS, MarketEvent, Season, WeatherEvent, Holiday, EconomicCondition
+        
+        market_engine = MarketEventsEngine()
+        
+        # Convert dict back to MarketEvent object for processing
+        event_obj = MarketEvent(
+            day=market_event.get('day', 1),
+            season=Season(market_event['season']),
+            weather=WeatherEvent(market_event['weather']),
+            holiday=Holiday(market_event['holiday']),
+            economic_condition=EconomicCondition(market_event['economic_condition']),
+            description=market_event['description'],
+            demand_multiplier=market_event['demand_multiplier']
+        )
+        
+        # Calculate demand multipliers for all products
+        product_demands = {}
+        for product_name in PRODUCTS.keys():
+            multiplier = market_engine.get_product_demand_multiplier(product_name, event_obj)
+            product_demands[product_name] = multiplier
+        
+        # Find products with high and low seasonal demand
+        high_demand = [(name, mult) for name, mult in product_demands.items() if mult >= 1.3]
+        low_demand = [(name, mult) for name, mult in product_demands.items() if mult <= 0.7]
+        
+        if high_demand:
+            high_demand.sort(key=lambda x: x[1], reverse=True)
+            console.print(f"   📈 [green]HIGH DEMAND: {', '.join([f'{name} ({mult:.1f}x)' for name, mult in high_demand[:3]])}[/green]")
+        
+        if low_demand:
+            low_demand.sort(key=lambda x: x[1])
+            console.print(f"   📉 [red]LOW DEMAND: {', '.join([f'{name} ({mult:.1f}x)' for name, mult in low_demand[:3]])}[/red]")
 
 @app.command()
 def run(days: int = 7, interactive: bool = False): #Default to False for non-interactive mode

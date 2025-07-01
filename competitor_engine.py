@@ -7,14 +7,14 @@ class CompetitorEngine:
     """🔥 Phase 1B Enhanced: ULTRA-AGGRESSIVE Competition System 🔥"""
     
     def __init__(self):
-        # Phase 1B Enhanced: ULTRA-AGGRESSIVE Competition System
-        self.competitor_prices = {
-            "Coke": 2.10,
-            "Chips": 1.95, 
-            "Candy": 2.20,
-            "Water": 1.80,
-            "Gum": 2.05
+        # Phase 2A Enhanced: ULTRA-AGGRESSIVE Competition System - 10 Products!
+        # Initialize competitor prices slightly different from our defaults for each product
+        base_prices = {
+            "Coke": 2.10, "Water": 1.80, "Chips": 1.95, "Crackers": 1.85,
+            "Sandwiches": 4.20, "Bananas": 1.15, "Ice Cream": 3.40,
+            "Candy": 2.20, "Gum": 2.05, "Chocolate": 2.50
         }
+        self.competitor_prices = base_prices
         
         # Enhanced competitor intelligence and aggression tracking
         self.competitor_last_prices = self.competitor_prices.copy()

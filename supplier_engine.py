@@ -122,9 +122,10 @@ class SupplierEngine:
             }
         }
     
-    def process_deliveries(self, store_state: StoreState) -> List[Dict]:
-        """🚚 DELIVERY PROCESSING SYSTEM: Handle incoming deliveries and supply failures"""
-        delivery_results = []
+    def process_deliveries(self, store_state: StoreState) -> Dict:
+        """🚚 Phase 2A: DELIVERY PROCESSING SYSTEM with Batch Creation Support"""
+        successful_deliveries = []
+        failed_deliveries = []
         completed_deliveries = []
         
         for delivery in store_state.pending_deliveries:
@@ -133,11 +134,9 @@ class SupplierEngine:
                 supplier = next(s for s in SUPPLIERS[delivery.product_name] if s.name == delivery.supplier_name)
                 
                 if __import__('random').random() <= supplier.reliability:
-                    # Successful delivery
-                    store_state.inventory[delivery.product_name] += delivery.quantity
-                    delivery_results.append({
-                        "success": True,
-                        "product": delivery.product_name,
+                    # Successful delivery - store_engine will create the batch
+                    successful_deliveries.append({
+                        "product_name": delivery.product_name,
                         "quantity": delivery.quantity,
                         "supplier": delivery.supplier_name,
                         "cost": delivery.total_cost,
@@ -152,9 +151,8 @@ class SupplierEngine:
                         # Remove from accounts payable
                         store_state.accounts_payable -= delivery.total_cost
                     
-                    delivery_results.append({
-                        "success": False,
-                        "product": delivery.product_name,
+                    failed_deliveries.append({
+                        "product_name": delivery.product_name,
                         "quantity": delivery.quantity,
                         "supplier": delivery.supplier_name,
                         "cost": delivery.total_cost,
@@ -166,7 +164,12 @@ class SupplierEngine:
         # Remove completed deliveries
         store_state.pending_deliveries = [d for d in store_state.pending_deliveries if d not in completed_deliveries]
         
-        return delivery_results
+        return {
+            "successful_deliveries": successful_deliveries,
+            "failed_deliveries": failed_deliveries,
+            "total_delivered": len(successful_deliveries),
+            "total_failed": len(failed_deliveries)
+        }
     
     def process_payment_obligations(self, store_state: StoreState) -> Dict:
         """💰 PAYMENT PROCESSING: Handle NET-30 payment obligations"""

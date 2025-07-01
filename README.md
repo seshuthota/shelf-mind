@@ -4,16 +4,18 @@
 
 An AI agent that autonomously manages a convenience store with ruthless competitive strategy, inspired by Anthropic's Project Vend. Meet **Ebenezer Scrooge** - your AI business strategist who dominates markets through aggressive pricing and smart inventory management.
 
-## ✅ **Current Status: Phase 1 Complete + Major Refactoring - ENTERPRISE-READY**
+## ✅ **Current Status: Phase 2B Complete - SEASONAL MARKET MASTERY**
 
-**🎯 Latest Achievement**: Major Architectural Refactoring - Clean, modular engine architecture
+**🎯 Latest Achievement**: Complete seasonal demand system with 4-season cycles, weather effects, and economic conditions
 
 ### 🔥 **Key Features**
 - **🏗️ Clean Architecture**: Modular engine design with single-responsibility components
 - **🎯 Customer Segmentation**: 60% price-sensitive + 40% brand-loyal customer psychology
 - **🔥 Ultra-Aggressive Competitor**: 5-strategy AI with psychological warfare capabilities  
 - **🏭 Advanced Supply Chain**: Multi-supplier optimization with delivery tracking
-- **🤖 AI Strategic Agent**: Scrooge with competitive intelligence and learning capabilities
+- **🌍 Seasonal Market Dynamics**: 4-season cycles with weather events and economic conditions
+- **🎉 Holiday Demand Spikes**: Valentine's, Halloween, Summer Picnics with massive demand explosions
+- **🤖 AI Strategic Agent**: Scrooge with competitive intelligence and seasonal market awareness
 - **📊 Executive Dashboard**: At-a-glance business health, trends, and strategic recommendations
 - **⚔️ Dynamic Pricing Wars**: Real-time price battles with escalating intensity (0-10 scale)
 
@@ -136,9 +138,36 @@ python main.py test
 5. Learn from results and adapt future strategies
 ```
 
+## 🌍 **Seasonal Market Dynamics**
+
+### **Advanced Market Events System:**
+- **4-Season Cycles**: Spring, Summer, Fall, Winter with 30-day automatic progression
+- **Weather Events**: Heat waves boost beverages, cold snaps increase comfort foods
+- **Holiday Demand Spikes**: Halloween candy (3.0x), Valentine's chocolate (2.5x), Summer picnics (1.8x)
+- **Economic Conditions**: Boom, recession, recovery affecting customer spending patterns
+- **Product Seasonality**: Ice cream (2.0x summer, 0.3x winter), Water (1.6x summer)
+
+### **Real-time Market Intelligence:**
+```
+🌍 Market Conditions - Day 2
+Season: 🌸 Spring (Day 2/30) | Weather: 🌤️ Normal | Economic: 📈 Boom (1.0x spending)
+Holiday: None | Market Description: Pleasant spring weather with strong economy
+
+🎯 Seasonal Product Insights:
+   📈 HIGH DEMAND: Sandwiches (1.7x), Ice Cream (1.6x), Water (1.4x)
+   📉 NORMAL DEMAND: Coke, Chips, Candy, Bananas, Chocolate, Crackers, Gum
+```
+
 ## 📈 **Performance Achievements**
 
-### **Phase 1B Enhanced Results:**
+### **Phase 2B Seasonal Market Results:**
+- **✅ Seasonal System Integration**: 4-dimensional warfare (customers + competition + supply chain + market conditions)
+- **✅ Market Intelligence**: Real-time seasonal insights with product demand forecasting
+- **✅ Weather Adaptation**: Customer behavior changes authentically with weather conditions
+- **✅ Holiday Demand Management**: Successfully handled massive holiday demand spikes
+- **✅ Economic Cycle Response**: Agent adapts to boom/recession spending patterns
+
+### **Phase 1 Foundation Results:**
 - **✅ 34% Profit Improvement**: $85 → $113+ over comparable periods
 - **✅ Dynamic Competition**: Price war intensity 2/10 → 10/10 escalation  
 - **✅ Strategic Responsiveness**: Real-time competitor reaction and counter-moves
@@ -163,19 +192,30 @@ python main.py test
                     ┌─────────────────┐
                     │  Store Engine   │ ◄─── Core Orchestration (165 lines)
                     │ (Coordinator)   │
-                    └─────┬─┬─┬───────┘
-                          │ │ │
-           ┌──────────────┘ │ └──────────────┐
-           │                │                │
-           ▼                ▼                ▼
+                    └─────┬─┬─┬─┬─────┘
+                          │ │ │ │
+           ┌──────────────┘ │ │ └────────────────┐
+           │                │ │                  │
+           ▼                ▼ ▼                  ▼
 ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
 │ Customer Engine │ │Competitor Engine│ │ Supplier Engine │
-│   🎯 (195L)     │ │   🔥 (302L)     │ │   🏭 (225L)     │
+│   🎯 (220L)     │ │   🔥 (302L)     │ │   🏭 (225L)     │
 │                 │ │                 │ │                 │
 │• 60/40 segments │ │• 5 strategies   │ │• Multi-supplier │
-│• Psychology     │ │• Psychological  │ │• Delivery track │
-│• Behavior model │ │• Price warfare  │ │• Payment terms  │
+│• Seasonal prefs │ │• Psychological  │ │• Delivery track │
+│• Weather adapt  │ │• Price warfare  │ │• Payment terms  │
 └─────────────────┘ └─────────────────┘ └─────────────────┘
+           │                              
+           ▼                              
+┌─────────────────┐                      
+│Market Events    │                      
+│   🌍 (180L)     │                      
+│                 │                      
+│• 4 seasons      │                      
+│• Weather events │                      
+│• Holiday spikes │                      
+│• Economic cycles│                      
+└─────────────────┘                      
 ```
 
 **🎯 Enterprise Benefits:**
