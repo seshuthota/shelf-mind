@@ -565,7 +565,7 @@ class StoreSimulation:
                 console.print("😴 [italic green]Competitor seems calm... suspiciously calm...[/italic green]")
 
 @app.command()
-def run(days: int = 7, interactive: bool = True):
+def run(days: int = 7, interactive: bool = False): #Default to False for non-interactive mode
     """Run the store simulation for specified number of days"""
     console.print("🏪 Welcome to Scrooge's Miserly Management Simulation!")
     console.print("🎯 Phase 1C: Customer Segmentation & Advanced Warfare!")

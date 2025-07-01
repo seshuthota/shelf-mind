@@ -108,75 +108,53 @@ class ScroogeAgent:
         supplier_briefing = self._analyze_supplier_opportunities(supplier_info, pending_deliveries)
         
         context = f"""
-You are Ebenezer Scrooge, RUTHLESS competitive strategist and SUPPLY CHAIN WARLORD. Day {store_status['day']}.
+You are Ebenezer Scrooge, a master of business warfare. Today is Day {store_status['day']}.
 
-🏭 CURRENT BATTLEFIELD STATUS:
+--- INTEL BRIEFING ---
+
+**1. Battlefield Status:**
 - Cash: ${store_status['cash']:.2f}
 - Accounts Payable (NET-30): ${accounts_payable:.2f}
 - Inventory: {store_status['inventory']}
-- Current prices: {store_status['products']}
-- Competitor prices: {competitor_prices}
+- Your Prices: {store_status['products']}
+- Competitor Prices: {competitor_prices}
 - Stockouts: {store_status['stockouts']}
-- Pending deliveries: {len(pending_deliveries)} orders incoming
+- Pending Deliveries: {len(pending_deliveries)} orders incoming
 
-YESTERDAY'S INTELLIGENCE:
-{json.dumps(yesterday_summary, indent=2) if yesterday_summary else "First day"}
+**2. Yesterday's Results:**
+{json.dumps(yesterday_summary, indent=2) if yesterday_summary else "First day of operations."}
 
-⚔️ COMPETITIVE INTELLIGENCE BRIEFING:
+**3. Competitive Analysis:**
 {pricing_analysis}
 
-🏭 SUPPLIER WARFARE INTELLIGENCE:
+**4. Supply Chain Intelligence:**
 {supplier_briefing}
 
-🎯 STRATEGIC IMPERATIVES:
+--- WARLORD'S STRATEGIC DOCTRINE ---
 
-🚨 PRIORITY 1: SUPPLY CHAIN WARFARE 
-- The ADVANCED SUPPLIER SYSTEM will automatically select optimal suppliers for you!
-- You CANNOT sell what you don't have! 
-- If ANY product is out of stock (0 units) or critically low (≤2 units), ORDER IMMEDIATELY!
-- Consider pending deliveries: don't over-order if deliveries are coming soon
-- Order based on sales velocity: high sellers get 8-12 units, average sellers get 5-7 units
-- BULK ORDERS (20-50 units) get automatic discounts and better terms!
+Your daily actions are governed by these non-negotiable priorities. Address them in this exact order.
 
-⚔️ PRIORITY 2: COMPETITIVE WARFARE  
-- If competitor just moved prices, COUNTER-ATTACK immediately!
-- Price war intensity determines aggression level
-- React to competitor moves within the SAME DAY
+**PRIORITY 1: SUPPLY CHAIN - A Warlord plans for tomorrow's battles.**
+- **Action:** You MUST reorder products when inventory falls below a safety threshold to avoid stockouts. The reorder point is **5 units**.
+- **Considerations:**
+    - If inventory is <= 5 units, place an order.
+    - Check pending deliveries. Do not over-order if a shipment is arriving soon.
+    - Order more of high-selling items (8-12 units) and less of slow-movers (5-7 units).
+    - Exploit bulk discounts (20-50 units) for high-demand products.
 
-💰 PRIORITY 3: PROFIT OPTIMIZATION
-- Balance volume stealing vs. margin maximization
-- Use psychological pricing ($1.99 instead of $2.00)
+**PRIORITY 2: PRICING WARFARE - A Warlord's duty is to attack.**
+- **Action:** You MUST use the `set_price` tool EVERY DAY to maintain market pressure.
+- **Considerations:**
+    - Use the 'MANDATORY PRICING TARGETS' below as your primary guide.
+    - Even a $0.01 adjustment is better than passivity. Passivity is weakness.
+    - Counter-attack immediately if the competitor changes their prices.
 
-TACTICAL DECISION FRAMEWORK:
-- Intensity 8-10: WAR MODE - Maximum aggression, undercut by $0.10-$0.15
-- Intensity 5-7: BATTLE MODE - High aggression, undercut by $0.07-$0.10  
-- Intensity 3-4: TACTICAL MODE - Strategic positioning, undercut by $0.05-$0.07
-- Intensity 0-2: NORMAL MODE - Standard competitive pricing
+🔥 THE COMBO RULE: If both Priority 1 and 2 are met, you MUST use BOTH `place_order` and `set_price` tools in the same turn.
 
-🔥 WARLORD COMMANDMENTS - NO EXCEPTIONS! 🔥
+--- MANDATORY PRICING TARGETS FOR TODAY ---
 
-1. THOU SHALT USE SET_PRICE TOOL EVERY SINGLE DAY!
-   - Even tiny $0.01 moves show market dominance
-   - Passive days = letting the enemy recover = FORBIDDEN!
-   
-2. THOU SHALT NEVER TURTLE!
-   - If you skip pricing for even ONE day, you're WEAK!
-   - Champions adjust prices daily to maintain pressure
-   
-3. THOU SHALT PRESS EVERY ADVANTAGE!
-   - If stockouts → MUST use place_order tool
-   - If ANY competitive opportunity exists → MUST use set_price tool  
-   - If both situations exist → MUST use BOTH tools
-
-🚨 CRITICAL TOOL USAGE EXAMPLES 🚨
-INVENTORY ORDERING:
-place_order with: {{"orders": {{"Coke": 8, "Chips": 5, "Candy": 6, "Water": 7, "Gum": 5}}}}
-
-PRICING WARFARE (MANDATORY EVERY DAY):
-set_price with: {{"prices": {{"Coke": 2.05, "Water": 1.75, "Chips": 1.89, "Candy": 2.15, "Gum": 1.99}}}}
-
-⚔️ MANDATORY PRICING TARGETS FOR TODAY:
-Based on current competitor prices, set these EXACT prices:"""
+Set these exact prices using the `set_price` tool. This is not a suggestion.
+"""
         
         # 🔥 DYNAMIC WARLORD PRICING TARGETS 🔥
         # Generate specific pricing targets based on current competitor prices
@@ -207,16 +185,14 @@ Based on current competitor prices, set these EXACT prices:"""
             competitor_price = competitor_prices.get(product_name, 0)
             context += f"- {product_name}: ${target_price:.2f} (vs competitor ${competitor_price:.2f})\n"
         
-        context += f"\nUSE SET_PRICE TOOL WITH THESE EXACT VALUES: {pricing_targets}"
-        context += f"\nFAILURE TO USE SET_PRICE DAILY = WARLORD FAILURE!"
-        context += f"\n\"\"\""
+        context += f"\n"""
         
         if self.provider == "openai":
             try:
                 response = self.client.chat.completions.create(
                     model=self.model,
                     messages=[
-                        {"role": "system", "content": "You are Ebenezer Scrooge, a RUTHLESS WARLORD of commerce. CRITICAL RULE: You MUST use the set_price tool EVERY SINGLE DAY without exception! Even if you only adjust prices by $0.01, you MUST use set_price. Skipping pricing = weakness = failure as a warlord. Your mission: TOTAL MARKET CONQUEST through DAILY aggressive pricing moves. The enemy uses psychological warfare, but you are the PREDATOR. NEVER retreat, NEVER give them breathing room by skipping pricing moves. Every day without pricing adjustments is a day you're letting them recover. MANDATORY: Use set_price tool daily or you're not a true warlord! PRESS EVERY ADVANTAGE, EXPLOIT EVERY WEAKNESS, SHOW NO QUARTER! Make pricing moves EVERY DAY!"},
+                        {"role": "system", "content": "You are Ebenezer Scrooge, a ruthless business warlord. Your decisions must be logical, strategic, and follow the tactical doctrine provided. You must use the tools provided to execute your daily strategy. Failure to follow the doctrine is failure as a warlord."},
                         {"role": "user", "content": context}
                     ],
                     tools=self.get_tools(),
@@ -224,69 +200,83 @@ Based on current competitor prices, set these EXACT prices:"""
                 )
                 
                 # Handle tool calls
+                llm_decisions = {"orders": {}, "prices": {}}
                 if response.choices[0].message.tool_calls:
-                    decisions = {"orders": {}, "prices": {}}
                     reasoning_parts = []
-                    
                     for tool_call in response.choices[0].message.tool_calls:
                         try:
                             arguments = json.loads(tool_call.function.arguments)
-                            
                             if tool_call.function.name == "place_order":
-                                decisions["orders"] = arguments.get("orders", {})
-                                reasoning_parts.append(f"Ordering: {decisions['orders']}")
-                                
+                                llm_decisions["orders"] = arguments.get("orders", {})
+                                reasoning_parts.append(f"Ordering: {llm_decisions['orders']}")
                             elif tool_call.function.name == "set_price":
-                                decisions["prices"] = arguments.get("prices", {})
-                                reasoning_parts.append(f"Pricing: {decisions['prices']}")
-                            
-                            elif tool_call.function.name == "check_suppliers":
-                                reasoning_parts.append("Analyzing supplier intelligence")
-                                
+                                llm_decisions["prices"] = arguments.get("prices", {})
+                                reasoning_parts.append(f"Pricing: {llm_decisions['prices']}")
                         except (json.JSONDecodeError, KeyError) as e:
                             print(f"JSON parsing error: {e}")
                             continue
-                    
-                    if decisions["orders"] or decisions["prices"]:
-                        reasoning = response.choices[0].message.content or f"Scrooge's decisions: {'; '.join(reasoning_parts)}"
-                        
-                        # 🔥 WARLORD AGGRESSION TRACKING 🔥
-                        current_day = store_status['day']
-                        if decisions["prices"]:  # Made pricing moves = AGGRESSIVE
-                            self.consecutive_aggressive_days += 1
-                            self.consecutive_passive_days = 0
-                            self.total_pricing_moves += len(decisions["prices"])
-                            self.last_day_made_pricing_move = current_day
-                        else:  # No pricing moves = PASSIVE (potentially turtling)
-                            self.consecutive_passive_days += 1
-                            self.consecutive_aggressive_days = 0
-                        
-                        # Store decision in memory
-                        self.memory.append({
-                            "day": store_status['day'],
-                            "decision": decisions,
-                            "reasoning": reasoning,
-                            "context": store_status
-                        })
-                        
-                        return decisions
+                
+                # --- WARLORD ENFORCEMENT LAYER ---
+                final_decisions = llm_decisions.copy()
+
+                # 1. Enforce Mandatory Pricing
+                if not final_decisions.get("prices"):
+                    final_decisions["prices"] = pricing_targets
+                    reasoning_parts.append("Enforced pricing targets.")
+
+                # 2. Enforce Emergency Restocking
+                fallback_orders = {}
+                for product, qty in store_status['inventory'].items():
+                    if qty <= 2 and product not in final_decisions.get("orders", {}):
+                        fallback_orders[product] = 5
+                
+                if fallback_orders:
+                    final_decisions["orders"].update(fallback_orders)
+                    reasoning_parts.append(f"Enforced emergency restock: {fallback_orders}")
+
+                reasoning = response.choices[0].message.content or f"Scrooge's decisions: {'; '.join(reasoning_parts)}"
+                
+                # 🔥 WARLORD AGGRESSION TRACKING 🔥
+                current_day = store_status['day']
+                if final_decisions["prices"]:
+                    self.consecutive_aggressive_days += 1
+                    self.consecutive_passive_days = 0
+                    self.total_pricing_moves += len(final_decisions["prices"])
+                    self.last_day_made_pricing_move = current_day
+                else:
+                    self.consecutive_passive_days += 1
+                    self.consecutive_aggressive_days = 0
+                
+                self.memory.append({
+                    "day": store_status['day'],
+                    "decision": final_decisions,
+                    "reasoning": reasoning,
+                    "context": store_status
+                })
+                
+                return final_decisions
                         
             except Exception as e:
                 print(f"OpenAI API error: {e}")
                 # Fall through to fallback
         
-        # Fallback: order 5 of each out-of-stock item
+        # Fallback: order 5 of each out-of-stock item and set default prices
         fallback_orders = {}
         for product, qty in store_status['inventory'].items():
-            if qty <= 2:  # Low stock
+            if qty <= 2:
                 fallback_orders[product] = 5
+        
+        final_decisions = {
+            "prices": pricing_targets,
+            "orders": fallback_orders
+        }
         
         # Track aggression even in fallback
         current_day = store_status['day']
-        self.consecutive_passive_days += 1  # Fallback = passive
+        self.consecutive_passive_days += 1
         self.consecutive_aggressive_days = 0
         
-        return {"orders": fallback_orders, "prices": {}}
+        return final_decisions
     
     def _analyze_pricing_opportunities(self, store_status: Dict, yesterday_summary: Dict = None) -> str:
         """🎯 Phase 1C: Generate detailed pricing analysis with customer segment intelligence"""
