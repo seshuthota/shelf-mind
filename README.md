@@ -4,17 +4,18 @@
 
 An AI agent that autonomously manages a convenience store with ruthless competitive strategy, inspired by Anthropic's Project Vend. Meet **Ebenezer Scrooge** - your AI business strategist who dominates markets through aggressive pricing and smart inventory management.
 
-## ✅ **Current Status: Phase 1B Enhanced - COMPLETE**
+## ✅ **Current Status: Phase 1 Complete + Major Refactoring - ENTERPRISE-READY**
 
-**🎯 Latest Achievement**: Executive Dashboard Analytics with "At-a-Glance" intelligence
+**🎯 Latest Achievement**: Major Architectural Refactoring - Clean, modular engine architecture
 
 ### 🔥 **Key Features**
-- **AI Strategic Agent**: Scrooge with competitive intelligence and learning capabilities
-- **Dynamic Pricing Wars**: Real-time price battles with escalating intensity (2/10 → 10/10)
-- **Executive Dashboard**: At-a-glance business health, trends, and strategic recommendations
-- **Competitive Intelligence**: Real-time market positioning and competitor reaction tracking
-- **Smart Inventory**: Sales-velocity-based ordering with intelligent buffer management
-- **Performance Analytics**: 5-day trend analysis with visual indicators
+- **🏗️ Clean Architecture**: Modular engine design with single-responsibility components
+- **🎯 Customer Segmentation**: 60% price-sensitive + 40% brand-loyal customer psychology
+- **🔥 Ultra-Aggressive Competitor**: 5-strategy AI with psychological warfare capabilities  
+- **🏭 Advanced Supply Chain**: Multi-supplier optimization with delivery tracking
+- **🤖 AI Strategic Agent**: Scrooge with competitive intelligence and learning capabilities
+- **📊 Executive Dashboard**: At-a-glance business health, trends, and strategic recommendations
+- **⚔️ Dynamic Pricing Wars**: Real-time price battles with escalating intensity (0-10 scale)
 
 ## 🚀 **Quick Start**
 
@@ -150,21 +151,39 @@ python main.py test
 - **Inventory Excellence**: Zero critical stockouts with intelligent ordering
 - **Decision Quality**: Uses both pricing and inventory tools strategically
 
-## 🏗️ **Architecture**
+## 🏗️ **Clean Engine Architecture**
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Scrooge       │    │  Store Engine   │    │   Dynamic       │
-│   (Strategic    │◄──►│  (Business +    │◄──►│   Competitor    │
-│   AI Agent)     │    │   Competition)  │    │   (Price Wars)  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Competitive   │    │   Executive     │    │   Performance   │
-│   Memory        │    │   Dashboard     │    │   Analytics     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+                    ┌─────────────────┐
+                    │   Scrooge       │
+                    │  (AI Agent)     │
+                    └─────────┬───────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │  Store Engine   │ ◄─── Core Orchestration (165 lines)
+                    │ (Coordinator)   │
+                    └─────┬─┬─┬───────┘
+                          │ │ │
+           ┌──────────────┘ │ └──────────────┐
+           │                │                │
+           ▼                ▼                ▼
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│ Customer Engine │ │Competitor Engine│ │ Supplier Engine │
+│   🎯 (195L)     │ │   🔥 (302L)     │ │   🏭 (225L)     │
+│                 │ │                 │ │                 │
+│• 60/40 segments │ │• 5 strategies   │ │• Multi-supplier │
+│• Psychology     │ │• Psychological  │ │• Delivery track │
+│• Behavior model │ │• Price warfare  │ │• Payment terms  │
+└─────────────────┘ └─────────────────┘ └─────────────────┘
 ```
+
+**🎯 Enterprise Benefits:**
+- **Single Responsibility**: Each engine has one clear purpose
+- **Easy Testing**: Engines can be tested independently  
+- **Clean Interfaces**: Well-defined APIs between components
+- **Maintainable**: Easy to modify and extend individual systems
+- **Phase 2 Ready**: Perfect foundation for advanced features
 
 ## 🎯 **Next Phase: Customer Types**
 
