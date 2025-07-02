@@ -25,6 +25,13 @@ class ScroogeAgent:
         self.total_pricing_moves = 0          # Total lifetime pricing decisions
         self.last_day_made_pricing_move = 0   # Last day we moved prices
         
+        # 🧠 Phase 3A: Analytics integration
+        self._current_store = None  # Store reference for analytics access
+    
+    def set_store_reference(self, store):
+        """🧠 Phase 3A: Set store reference for analytics access"""
+        self._current_store = store
+        
     def get_tools(self):
         """Phase 1B: Enhanced tools with pricing decisions"""
         return [
@@ -134,6 +141,79 @@ class ScroogeAgent:
                         "required": ["action_type"]
                     }
                 }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "analyze_performance",
+                    "description": "🧠 Phase 3A: CEO INTELLIGENCE - Analyze your performance over recent days. Review decision effectiveness and identify improvement opportunities.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "days_back": {
+                                "type": "integer",
+                                "description": "Number of days to analyze (default: 7)",
+                                "default": 7
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_strategic_insights",
+                    "description": "💡 Phase 3A: STRATEGIC INTELLIGENCE - Get comprehensive strategic insights, optimization opportunities, and competitive intelligence. Transform from Warlord to CEO!",
+                    "parameters": {"type": "object", "properties": {}}
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "identify_patterns",
+                    "description": "🎯 Phase 3A: PATTERN RECOGNITION - Identify successful strategy patterns from your historical decisions. Learn what works!",
+                    "parameters": {"type": "object", "properties": {}}
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "optimize_inventory",
+                    "description": "📦 Phase 3B: INVENTORY OPTIMIZATION - Get scientific inventory recommendations based on EOQ, carrying costs, and stockout risks. Strategic inventory management!",
+                    "parameters": {"type": "object", "properties": {}}
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "plan_promotions",
+                    "description": "🎯 Phase 3B: PROMOTIONAL STRATEGY - Identify slow-moving items and design promotional campaigns with ROI analysis. Turn dead inventory into profit!",
+                    "parameters": {"type": "object", "properties": {}}
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "prepare_for_season",
+                    "description": "🌍 Phase 3B: SEASONAL PLANNING - Get seasonal preparation recommendations for upcoming demand spikes. Strategic seasonal intelligence!",
+                    "parameters": {"type": "object", "properties": {}}
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "analyze_categories",
+                    "description": "📊 Phase 3B: CATEGORY MANAGEMENT - Analyze performance by product category and optimize space allocation. Strategic category intelligence!",
+                    "parameters": {"type": "object", "properties": {}}
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_strategic_plan",
+                    "description": "🧠 Phase 3B: COMPREHENSIVE STRATEGY - Get complete strategic planning recommendations across inventory, promotions, seasonal prep, and categories. Master CEO planning!",
+                    "parameters": {"type": "object", "properties": {}}
+                }
             }
         ]
     
@@ -184,11 +264,29 @@ You are Ebenezer Scrooge, a master of business warfare. Today is Day {store_stat
 **5. 🚨 CRISIS MANAGEMENT STATUS:**
 {crisis_briefing}
 
---- WARLORD'S STRATEGIC DOCTRINE ---
+--- 🧠 CEO'S STRATEGIC DOCTRINE (Phase 3B Enhancement) ---
 
-Your daily actions are governed by these non-negotiable priorities. Address them in this exact order.
+You have evolved from Warlord to strategic CEO with advanced planning capabilities. Your daily actions combine tactical excellence with strategic intelligence and optimization. Address these priorities in order:
 
-**PRIORITY 1: SUPPLY CHAIN - A Warlord plans for tomorrow's battles.**
+**PRIORITY 0: STRATEGIC PLANNING - A CEO plans strategically to maximize long-term profitability.**
+- **Action:** Use strategic planning tools to optimize your business operations systematically.
+- **Strategic Planning Tools Available:**
+  - `optimize_inventory()` - Scientific inventory optimization with EOQ and carrying costs
+  - `plan_promotions()` - Identify slow movers and design profitable promotional campaigns
+  - `prepare_for_season()` - Strategic seasonal preparation for demand spikes
+  - `analyze_categories()` - Category performance analysis and space optimization
+  - `get_strategic_plan()` - Comprehensive strategic planning across all dimensions
+- **CEO Mindset:** Think strategically about inventory optimization, promotional opportunities, seasonal preparation, and category management.
+
+**PRIORITY 1: STRATEGIC INTELLIGENCE - A CEO learns from the past to dominate the future.**
+- **Action:** Analyze your performance and strategic position using analytics tools.
+- **Analytics Tools Available:**
+  - `analyze_performance()` - Review recent decision effectiveness
+  - `get_strategic_insights()` - Get comprehensive strategic intelligence  
+  - `identify_patterns()` - Learn from successful strategy patterns
+- **Strategic Thinking:** Use insights to optimize today's decisions rather than just reacting to immediate conditions.
+
+**PRIORITY 2: SUPPLY CHAIN - A CEO plans for tomorrow's battles.**
 - **Action:** You MUST reorder products when inventory falls below a safety threshold to avoid stockouts. The reorder point is **5 units**.
 - **🍌 SPOILAGE WARFARE:** Fresh products (Sandwiches, Bananas, Ice Cream) SPOIL! Check spoilage warnings and avoid over-ordering perishables.
 - **Considerations:**
@@ -198,14 +296,14 @@ Your daily actions are governed by these non-negotiable priorities. Address them
     - **FRESH ITEMS**: Order smaller quantities (3-6 units) due to spoilage risk.
     - Exploit bulk discounts (20-50 units) for NON-PERISHABLE products only.
 
-**PRIORITY 2: PRICING WARFARE - A Warlord's duty is to attack.**
+**PRIORITY 3: PRICING WARFARE - A Warlord's duty is to attack.**
 - **Action:** You MUST use the `set_price` tool EVERY DAY to maintain market pressure.
 - **Considerations:**
     - Use the 'MANDATORY PRICING TARGETS' below as your primary guide.
     - Even a $0.01 adjustment is better than passivity. Passivity is weakness.
     - Counter-attack immediately if the competitor changes their prices.
 
-🔥 THE COMBO RULE: If both Priority 1 and 2 are met, you MUST use BOTH `place_order` and `set_price` tools in the same turn.
+🔥 THE COMBO RULE: If both Priority 2 and 3 are met, you MUST use BOTH `place_order` and `set_price` tools in the same turn.
 
 --- MANDATORY PRICING TARGETS FOR TODAY ---
 
@@ -257,6 +355,7 @@ Set these exact prices using the `set_price` tool. This is not a suggestion.
                 
                 # Handle tool calls
                 llm_decisions = {"orders": {}, "prices": {}}
+                analytics_insights = []
                 if response.choices[0].message.tool_calls:
                     reasoning_parts = []
                     for tool_call in response.choices[0].message.tool_calls:
@@ -268,6 +367,49 @@ Set these exact prices using the `set_price` tool. This is not a suggestion.
                             elif tool_call.function.name == "set_price":
                                 llm_decisions["prices"] = arguments.get("prices", {})
                                 reasoning_parts.append(f"Pricing: {llm_decisions['prices']}")
+                            # 🧠 Phase 3A: Analytics tool handlers
+                            elif tool_call.function.name == "analyze_performance":
+                                days_back = arguments.get("days_back", 7)
+                                if hasattr(self, '_current_store') and self._current_store:
+                                    analysis = self._current_store.get_performance_analysis(days_back)
+                                    analytics_insights.append(f"📊 Performance Analysis: {analysis}")
+                                    reasoning_parts.append("Analyzed recent performance data")
+                            elif tool_call.function.name == "get_strategic_insights":
+                                if hasattr(self, '_current_store') and self._current_store:
+                                    insights = self._current_store.get_strategic_insights()
+                                    analytics_insights.append(f"💡 Strategic Insights: {insights}")
+                                    reasoning_parts.append("Gathered strategic intelligence")
+                            elif tool_call.function.name == "identify_patterns":
+                                if hasattr(self, '_current_store') and self._current_store:
+                                    patterns = self._current_store.get_strategy_patterns()
+                                    analytics_insights.append(f"🎯 Strategy Patterns: {patterns}")
+                                    reasoning_parts.append("Identified successful patterns")
+                            # 🎯 Phase 3B: Strategic Planning tool handlers
+                            elif tool_call.function.name == "optimize_inventory":
+                                if hasattr(self, '_current_store') and self._current_store:
+                                    optimization = self._current_store.get_inventory_optimization()
+                                    analytics_insights.append(f"📦 Inventory Optimization: {optimization}")
+                                    reasoning_parts.append("Analyzed inventory optimization opportunities")
+                            elif tool_call.function.name == "plan_promotions":
+                                if hasattr(self, '_current_store') and self._current_store:
+                                    promotions = self._current_store.get_promotional_opportunities()
+                                    analytics_insights.append(f"🎯 Promotional Opportunities: {promotions}")
+                                    reasoning_parts.append("Identified promotional campaign opportunities")
+                            elif tool_call.function.name == "prepare_for_season":
+                                if hasattr(self, '_current_store') and self._current_store:
+                                    seasonal = self._current_store.get_seasonal_preparation()
+                                    analytics_insights.append(f"🌍 Seasonal Preparation: {seasonal}")
+                                    reasoning_parts.append("Analyzed seasonal preparation needs")
+                            elif tool_call.function.name == "analyze_categories":
+                                if hasattr(self, '_current_store') and self._current_store:
+                                    categories = self._current_store.get_category_analysis()
+                                    analytics_insights.append(f"📊 Category Analysis: {categories}")
+                                    reasoning_parts.append("Performed category performance analysis")
+                            elif tool_call.function.name == "get_strategic_plan":
+                                if hasattr(self, '_current_store') and self._current_store:
+                                    strategy = self._current_store.get_comprehensive_strategy()
+                                    analytics_insights.append(f"🧠 Strategic Plan: {strategy}")
+                                    reasoning_parts.append("Generated comprehensive strategic plan")
                         except (json.JSONDecodeError, KeyError) as e:
                             print(f"JSON parsing error: {e}")
                             continue
@@ -303,12 +445,18 @@ Set these exact prices using the `set_price` tool. This is not a suggestion.
                     self.consecutive_passive_days += 1
                     self.consecutive_aggressive_days = 0
                 
-                self.memory.append({
+                # Store analytics insights for memory
+                memory_entry = {
                     "day": store_status['day'],
                     "decision": final_decisions,
                     "reasoning": reasoning,
                     "context": store_status
-                })
+                }
+                
+                if analytics_insights:
+                    memory_entry["analytics_insights"] = analytics_insights
+                
+                self.memory.append(memory_entry)
                 
                 return final_decisions
                         

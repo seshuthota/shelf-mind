@@ -22,6 +22,9 @@ class StoreSimulation:
         self.day_summaries = []
         self.previous_prices = {}  # Track price changes
         
+        # 🧠 Phase 3A: Connect agent with store for analytics
+        self.scrooge.set_store_reference(self.store)
+        
     def display_executive_summary(self, status):
         """Display executive summary - AT-A-GLANCE business intelligence"""
         # Calculate key metrics
@@ -100,6 +103,10 @@ class StoreSimulation:
         # Multi-day performance trends (if we have enough data)
         if len(self.day_summaries) >= 3:
             self.display_performance_trends()
+        
+        # 🧠 Phase 3A: Strategic Intelligence Dashboard
+        if len(self.day_summaries) >= 2:  # Need at least 2 days for analytics
+            self.display_analytics_dashboard()
     
     def display_status(self):
         """Display current store status"""
@@ -386,6 +393,15 @@ class StoreSimulation:
         try:
             decisions = self.scrooge.make_daily_decision(status, yesterday_summary)
             
+            # 🧠 Phase 3A: Record decisions for analytics
+            market_context = self.store.market_events_engine.get_market_conditions(status['day']).__dict__
+            
+            if decisions.get("prices"):
+                self.store.record_pricing_decision(decisions["prices"], market_context)
+            
+            if decisions.get("orders"):
+                self.store.record_inventory_decision(decisions["orders"], market_context)
+            
             # Handle pricing decisions
             if decisions.get("prices"):
                 console.print(f"💰 [bold yellow]Scrooge's PRICING WARFARE:[/bold yellow]")
@@ -506,6 +522,20 @@ class StoreSimulation:
             title=f"Day {day_summary['day']-1} Accounting",
             border_style="green"
         ))
+        
+        # 🧠 Phase 3A: Display CEO Strategic Intelligence Dashboard
+        if len(self.day_summaries) >= 2:  # Show analytics after at least 2 days of data
+            try:
+                self.display_analytics_dashboard()
+            except Exception as e:
+                console.print(f"🧠 [red]Analytics Dashboard Error: {e}[/red]")
+        
+        # 🎯 Phase 3B: Display Strategic Planning Dashboard
+        if len(self.day_summaries) >= 3:  # Show strategic planning after at least 3 days of data
+            try:
+                self.display_strategic_planning_dashboard()
+            except Exception as e:
+                console.print(f"🎯 [red]Strategic Planning Dashboard Error: {e}[/red]")
         
         return day_summary
     
@@ -826,6 +856,167 @@ class StoreSimulation:
         if low_demand:
             low_demand.sort(key=lambda x: x[1])
             console.print(f"   📉 [red]LOW DEMAND: {', '.join([f'{name} ({mult:.1f}x)' for name, mult in low_demand[:3]])}[/red]")
+    
+    def display_analytics_dashboard(self):
+        """🧠 Phase 3A: Display strategic analytics and CEO intelligence"""
+        try:
+            # Get strategic insights
+            insights = self.store.get_strategic_insights()
+            
+            # Get performance analysis
+            performance = self.store.get_performance_analysis(7)
+            
+            analytics_content = ""
+            
+            # Performance metrics (if available)
+            if performance.get('error') is None:
+                avg_performance = performance.get('average_performance', {})
+                trends = performance.get('trends', {})
+                
+                analytics_content += f"""📊 [bold]PERFORMANCE SCORE:[/bold] {avg_performance.get('overall_score', 0):.1f}/100
+🎯 [bold]COMPETITIVE POSITION:[/bold] {avg_performance.get('competitive_position', 0):.1f}/100
+💰 [bold]PROFIT MARGIN:[/bold] {avg_performance.get('profit_margin', 0):.1f}%
+📈 [bold]TREND:[/bold] {trends.get('direction', 'Unknown').title()} ({trends.get('change', 0):+.1f})
+"""
+            else:
+                analytics_content += "📊 [italic]Performance metrics: Gathering baseline data...[/italic]\n"
+            
+            # Competitive intelligence
+            competitive_intel = insights.get('competitive_intelligence', {})
+            threat_level = competitive_intel.get('competitive_threat_level', 0)
+            if threat_level > 7:
+                threat_status = "🔥 CRITICAL"
+            elif threat_level > 4:
+                threat_status = "⚠️ HIGH"
+            elif threat_level > 2:
+                threat_status = "🟡 MODERATE"
+            else:
+                threat_status = "🟢 LOW"
+            
+            analytics_content += f"\n🛡️ [bold]COMPETITIVE THREAT:[/bold] {threat_status} ({threat_level}/10)"
+            
+            # Strategic recommendations
+            recommendations = insights.get('strategic_recommendations', [])
+            if recommendations:
+                analytics_content += f"\n\n🎯 [bold]STRATEGIC RECOMMENDATIONS:[/bold]"
+                for rec in recommendations[:3]:  # Show top 3
+                    analytics_content += f"\n   • {rec}"
+            
+            # Optimization opportunities  
+            opportunities = insights.get('optimization_opportunities', [])
+            if opportunities:
+                analytics_content += f"\n\n💡 [bold]OPTIMIZATION OPPORTUNITIES:[/bold]"
+                for opp in opportunities[:3]:  # Show top 3
+                    analytics_content += f"\n   • {opp}"
+            
+            # Risk warnings
+            risks = insights.get('risk_warnings', [])
+            if risks:
+                analytics_content += f"\n\n🚨 [bold]RISK ALERTS:[/bold]"
+                for risk in risks[:2]:  # Show top 2
+                    analytics_content += f"\n   • {risk}"
+            
+            # Learning summary
+            learnings = insights.get('learning_summary', [])
+            if learnings:
+                analytics_content += f"\n\n📚 [bold]KEY LEARNINGS:[/bold]"
+                for learning in learnings[:2]:  # Show top 2
+                    analytics_content += f"\n   • {learning}"
+            
+            # Performance trends from insights
+            perf_trends = insights.get('performance_trends', {})
+            if perf_trends.get('trend') != 'insufficient_data':
+                analytics_content += f"\n\n📈 [bold]STRATEGIC TREND:[/bold] {perf_trends.get('trend', 'Unknown').title()}"
+            
+            console.print(Panel(
+                analytics_content.strip(),
+                title="🧠 CEO STRATEGIC INTELLIGENCE",
+                border_style="cyan",
+                padding=(0, 1)
+            ))
+            
+        except Exception as e:
+            # Analytics not ready yet or error occurred
+            console.print(f"🧠 [red]Strategic Intelligence Error: {str(e)}[/red]")
+    
+    def display_strategic_planning_dashboard(self):
+        """🎯 Phase 3B: Display strategic planning recommendations"""
+        try:
+            # Get strategic planning data
+            inventory_opt = self.store.get_inventory_optimization()
+            promotions = self.store.get_promotional_opportunities()
+            seasonal = self.store.get_seasonal_preparation()
+            categories = self.store.get_category_analysis()
+            
+            planning_content = ""
+            
+            # Inventory optimization summary
+            inv_summary = inventory_opt.get('summary', {})
+            critical_reorders = inv_summary.get('critical_reorders', 0)
+            overstock_items = inv_summary.get('overstock_items', 0)
+            
+            if critical_reorders > 0 or overstock_items > 0:
+                planning_content += f"📦 [bold]INVENTORY OPTIMIZATION:[/bold]\n"
+                if critical_reorders > 0:
+                    planning_content += f"   🚨 {critical_reorders} critical reorders needed\n"
+                if overstock_items > 0:
+                    planning_content += f"   📉 {overstock_items} overstocked items to reduce\n"
+                planning_content += f"   💰 Daily carrying cost: ${inv_summary.get('total_carrying_cost', 0):.2f}\n"
+            
+            # Promotional opportunities
+            promo_summary = promotions.get('summary', {})
+            slow_movers = promo_summary.get('slow_movers', 0)
+            if slow_movers > 0:
+                planning_content += f"\n🎯 [bold]PROMOTIONAL OPPORTUNITIES:[/bold]\n"
+                planning_content += f"   📉 {slow_movers} slow-moving items identified\n"
+                potential_roi = promo_summary.get('total_potential_roi', 0)
+                if potential_roi > 0:
+                    planning_content += f"   💎 Potential ROI: {potential_roi:.1f}%\n"
+                priority_items = promo_summary.get('priority_items', [])
+                if priority_items:
+                    planning_content += f"   🎪 Priority items: {', '.join(priority_items[:3])}\n"
+            
+            # Seasonal preparation
+            seasonal_summary = seasonal.get('summary', {})
+            critical_preps = seasonal_summary.get('critical_preparations', 0)
+            if critical_preps > 0:
+                planning_content += f"\n🌍 [bold]SEASONAL PREPARATION:[/bold]\n"
+                next_season = seasonal_summary.get('next_season', 'unknown')
+                planning_content += f"   🌟 Preparing for {next_season.title()} season\n"
+                planning_content += f"   🚨 {critical_preps} critical preparations needed\n"
+                priority_products = seasonal_summary.get('priority_products', [])
+                if priority_products:
+                    planning_content += f"   📈 Priority products: {', '.join(priority_products[:3])}\n"
+            
+            # Category analysis
+            category_summary = categories.get('summary', {})
+            best_category = category_summary.get('best_category', 'none')
+            if best_category != 'none':
+                planning_content += f"\n📊 [bold]CATEGORY INTELLIGENCE:[/bold]\n"
+                planning_content += f"   🏆 Best performing: {best_category.title()}\n"
+                avg_margin = category_summary.get('avg_profit_margin', 0)
+                planning_content += f"   💰 Average margin: {avg_margin:.1f}%\n"
+                
+                growing = category_summary.get('growing_categories', [])
+                declining = category_summary.get('declining_categories', [])
+                if growing:
+                    planning_content += f"   📈 Growing: {', '.join(growing)}\n"
+                if declining:
+                    planning_content += f"   📉 Declining: {', '.join(declining)}\n"
+            
+            # Display dashboard if there's content
+            if planning_content.strip():
+                console.print(Panel(
+                    planning_content.strip(),
+                    title="🎯 STRATEGIC PLANNING DASHBOARD",
+                    border_style="blue",
+                    padding=(0, 1)
+                ))
+            else:
+                console.print("🎯 [italic blue]Strategic Planning: All systems optimized[/italic blue]")
+                
+        except Exception as e:
+            console.print(f"🎯 [red]Strategic Planning Error: {str(e)}[/red]")
 
 @app.command()
 def run(days: int = 7, interactive: bool = False): #Default to False for non-interactive mode

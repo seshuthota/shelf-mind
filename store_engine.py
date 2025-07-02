@@ -9,6 +9,8 @@ from competitor_engine import CompetitorEngine
 from supplier_engine import SupplierEngine
 from market_events_engine import MarketEventsEngine
 from crisis_engine import CrisisEngine
+from analytics_engine import AnalyticsEngine
+from strategic_planning_engine import StrategicPlanningEngine
 
 
 class StoreEngine:
@@ -51,6 +53,8 @@ class StoreEngine:
         self.supplier_engine = SupplierEngine()
         self.market_events_engine = MarketEventsEngine()  # Phase 2B: Seasonal demand & market events
         self.crisis_engine = CrisisEngine()  # Phase 2C: Crisis management & supply chain disruptions
+        self.analytics_engine = AnalyticsEngine()  # Phase 3A: Performance analysis & strategic intelligence
+        self.strategic_planning_engine = StrategicPlanningEngine()  # Phase 3B: Strategic planning & optimization
         
     def process_spoilage(self) -> List[SpoilageReport]:
         """🍌 Phase 2A: Process daily spoilage for fresh and frozen items"""
@@ -159,7 +163,7 @@ class StoreEngine:
         return self.crisis_engine.execute_emergency_action(action_type, parameters, self.state)
     
     def end_day(self) -> Dict:
-        """🌅 Phase 2A: Enhanced end-of-day processing with spoilage"""
+        """🌅 Phase 3A: Enhanced end-of-day processing with analytics tracking"""
         # Process spoilage BEFORE calculating profits
         spoilage_reports = self.process_spoilage()
         
@@ -181,6 +185,19 @@ class StoreEngine:
         self.state.cash += daily_revenue
         self.state.total_revenue += daily_revenue
         self.state.total_profit += daily_profit
+        
+        # 📊 Phase 3A: Record decision outcomes for analysis
+        outcome_data = {
+            'daily_sales': self.state.daily_sales.copy(),
+            'daily_profit': daily_profit,
+            'daily_revenue': daily_revenue,
+            'cash_after': self.state.cash,
+            'total_spoilage_cost': daily_spoilage_cost,
+            'stockouts': [name for name, item in self.state.inventory.items() if item.total_quantity == 0],
+            'price_war_intensity': self.competitor_engine.price_war_intensity,
+            'business_continued': True
+        }
+        self.analytics_engine.update_decision_outcome(self.state.day, outcome_data)
         
         # 🚚 Phase 2C: Process incoming deliveries with crisis effects
         delivery_results = self.supplier_engine.process_deliveries(self.state, self.crisis_engine)
@@ -362,4 +379,177 @@ class StoreEngine:
     @property
     def segment_analytics(self) -> Dict:
         """Access customer segment analytics through the engine"""
-        return self.customer_engine.segment_analytics 
+        return self.customer_engine.segment_analytics
+    
+    # 🧠 Phase 3A: Analytics & Strategic Intelligence Methods
+    
+    def record_pricing_decision(self, prices: Dict[str, float], market_context: Dict) -> None:
+        """📊 Record pricing decision for analytics"""
+        self.analytics_engine.record_decision(
+            'pricing', 
+            {'prices': prices}, 
+            self.state, 
+            market_context
+        )
+    
+    def record_inventory_decision(self, orders: Dict[str, int], market_context: Dict) -> None:
+        """📦 Record inventory decision for analytics"""
+        self.analytics_engine.record_decision(
+            'inventory', 
+            {'orders': orders}, 
+            self.state, 
+            market_context
+        )
+    
+    def record_crisis_decision(self, action_type: str, parameters: Dict, market_context: Dict) -> None:
+        """🚨 Record crisis response decision for analytics"""
+        self.analytics_engine.record_decision(
+            'crisis', 
+            {'action_type': action_type, 'parameters': parameters}, 
+            self.state, 
+            market_context
+        )
+    
+    def get_performance_analysis(self, days_back: int = 7) -> Dict:
+        """📈 Get comprehensive performance analysis"""
+        return self.analytics_engine.get_performance_analysis(days_back)
+    
+    def get_strategic_insights(self) -> Dict:
+        """💡 Get strategic insights and optimization recommendations"""
+        market_context = self.market_events_engine.get_market_conditions(self.state.day).__dict__
+        competitor_info = {
+            'war_intensity': self.competitor_engine.price_war_intensity,
+            'strategy': self.competitor_engine.competitor_strategy,
+            'price_advantage_score': self._calculate_price_advantage()
+        }
+        return self.analytics_engine.generate_strategic_insights(
+            self.state, 
+            market_context, 
+            competitor_info
+        )
+    
+    def get_strategy_patterns(self) -> List:
+        """🎯 Get identified successful strategy patterns"""
+        return self.analytics_engine.identify_strategy_patterns()
+    
+    # 🎯 Phase 3B: Strategic Planning & Optimization Methods
+    
+    def get_inventory_optimization(self) -> Dict:
+        """📦 Get inventory optimization recommendations"""
+        recommendations = self.strategic_planning_engine.inventory_optimizer.calculate_inventory_recommendations(
+            self.state, self.sales_history, self.current_prices
+        )
+        return {
+            'recommendations': [rec.__dict__ for rec in recommendations],
+            'summary': {
+                'critical_reorders': len([r for r in recommendations if r.recommended_action == 'order' and r.stockout_risk > 0.7]),
+                'overstock_items': len([r for r in recommendations if r.recommended_action == 'reduce']),
+                'total_carrying_cost': sum(r.carrying_cost_daily for r in recommendations),
+                'avg_confidence': sum(r.confidence for r in recommendations) / max(1, len(recommendations))
+            }
+        }
+    
+    def get_promotional_opportunities(self) -> Dict:
+        """🎯 Get promotional strategy recommendations"""
+        opportunities = self.strategic_planning_engine.promotional_strategy.identify_promotional_opportunities(
+            self.state, self.sales_history, self.current_prices
+        )
+        return {
+            'opportunities': [opp.__dict__ for opp in opportunities],
+            'summary': {
+                'slow_movers': len(opportunities),
+                'total_potential_roi': sum(max(0, opp.estimated_roi) for opp in opportunities),
+                'avg_discount_needed': sum(opp.recommended_discount_pct for opp in opportunities) / max(1, len(opportunities)),
+                'priority_items': [opp.product_name for opp in opportunities[:3]]
+            }
+        }
+    
+    def get_seasonal_preparation(self) -> Dict:
+        """🌍 Get seasonal preparation recommendations"""
+        current_season = self.market_events_engine.get_market_conditions(self.state.day).season.value
+        preparations = self.strategic_planning_engine.seasonal_planner.generate_seasonal_recommendations(
+            self.state, current_season, self.strategic_planning_engine._get_next_season(current_season),
+            self.market_events_engine
+        )
+        return {
+            'preparations': [prep.__dict__ for prep in preparations],
+            'summary': {
+                'critical_preparations': len([p for p in preparations if p.preparation_priority == 'critical']),
+                'total_buildup_needed': sum(p.recommended_buildup for p in preparations),
+                'next_season': self.strategic_planning_engine._get_next_season(current_season),
+                'priority_products': [p.product_name for p in preparations[:3]]
+            }
+        }
+    
+    def get_category_analysis(self) -> Dict:
+        """📊 Get category performance analysis"""
+        analyses = self.strategic_planning_engine.category_manager.analyze_category_performance(
+            self.state, self.sales_history, self.current_prices
+        )
+        return {
+            'analyses': [analysis.__dict__ for analysis in analyses],
+            'summary': {
+                'best_category': analyses[0].category if analyses else 'none',
+                'avg_profit_margin': sum(a.profit_margin for a in analyses) / max(1, len(analyses)),
+                'growing_categories': [a.category for a in analyses if a.growth_trend == 'growing'],
+                'declining_categories': [a.category for a in analyses if a.growth_trend == 'declining']
+            }
+        }
+    
+    def get_comprehensive_strategy(self) -> Dict:
+        """🧠 Get comprehensive strategic planning recommendations"""
+        current_season = self.market_events_engine.get_market_conditions(self.state.day).season.value
+        strategy = self.strategic_planning_engine.generate_comprehensive_strategy(
+            self.state, self.sales_history, self.current_prices, current_season, self.market_events_engine
+        )
+        
+        # Convert dataclasses to dicts for JSON serialization
+        strategy_dict = {
+            'inventory_optimization': [rec.__dict__ for rec in strategy['inventory_optimization']],
+            'promotional_opportunities': [opp.__dict__ for opp in strategy['promotional_opportunities']],
+            'seasonal_preparation': [prep.__dict__ for prep in strategy['seasonal_preparation']],
+            'category_analysis': [analysis.__dict__ for analysis in strategy['category_analysis']],
+            'strategic_priorities': strategy['strategic_priorities'],
+            'execution_plan': strategy['execution_plan']
+        }
+        
+        return strategy_dict
+    
+    def calculate_current_performance(self) -> Dict:
+        """📊 Calculate current day performance metrics"""
+        competitor_info = {
+            'war_intensity': self.competitor_engine.price_war_intensity,
+            'strategy': self.competitor_engine.competitor_strategy,
+            'price_advantage_score': self._calculate_price_advantage()
+        }
+        
+        # Get yesterday's data if available
+        yesterday_data = None
+        if len(self.sales_history) > 0:
+            yesterday_data = self.sales_history[-1]
+        
+        metrics = self.analytics_engine.calculate_daily_performance(
+            self.state, 
+            competitor_info, 
+            yesterday_data
+        )
+        return metrics.__dict__
+    
+    def _calculate_price_advantage(self) -> float:
+        """Calculate our price advantage vs competitor (0-100)"""
+        our_prices = list(self.current_prices.values())
+        competitor_prices = list(self.competitor_engine.competitor_prices.values())
+        
+        if not our_prices or not competitor_prices:
+            return 50
+        
+        avg_our_price = sum(our_prices) / len(our_prices)
+        avg_competitor_price = sum(competitor_prices) / len(competitor_prices)
+        
+        # Score based on how competitive our pricing is
+        if avg_our_price < avg_competitor_price:
+            advantage = min(100, 60 + ((avg_competitor_price - avg_our_price) / avg_competitor_price) * 100)
+        else:
+            advantage = max(0, 60 - ((avg_our_price - avg_competitor_price) / avg_competitor_price) * 100)
+        
+        return advantage 
