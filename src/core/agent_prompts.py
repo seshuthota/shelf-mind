@@ -4,7 +4,7 @@ Centralized prompt management for all specialist agents with distinct personalit
 """
 
 from typing import Dict, Any
-from src.core.multi_agent_engine import AgentRole
+from src.core.models import AgentRole
 
 class AgentPrompts:
     """🎭 Centralized prompt management with character personalities"""

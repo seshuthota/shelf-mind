@@ -8,6 +8,7 @@ import json
 from src.core.multi_agent_engine import BaseSpecialistAgent, AgentRole, AgentDecision
 from src.core.agent_prompts import AgentPrompts
 from src.core.models import PRODUCTS
+from src.tools.strategic_tools import StrategicTools
 
 class StrategicPlannerAgent(BaseSpecialistAgent):
     """🎯 Phase 4A.2: Tyrion Lannister - Master Strategic Planner
@@ -23,6 +24,7 @@ class StrategicPlannerAgent(BaseSpecialistAgent):
     
     def __init__(self, provider: str = "openai"):
         super().__init__(AgentRole.STRATEGIC_PLANNER, provider)
+        self.tools = StrategicTools()
         
     def _define_specializations(self) -> List[str]:
         """Define Tyrion's strategic planning specializations"""
@@ -87,8 +89,19 @@ class StrategicPlannerAgent(BaseSpecialistAgent):
             position['financial_strength'] = 'weak'
             position['strategic_risks'].append("Low cash limits options")
         
-        # Assess operational efficiency
-        stockouts = [product for product, qty in inventory.items() if qty == 0]
+        # Assess operational efficiency - handle both dict and int inventory values
+        stockouts = []
+        for product, qty in inventory.items():
+            if isinstance(qty, dict):
+                actual_qty = qty.get('total_quantity', 0)
+            elif hasattr(qty, 'total_quantity'):
+                actual_qty = qty.total_quantity
+            else:
+                actual_qty = qty
+                
+            if actual_qty == 0:
+                stockouts.append(product)
+        
         if len(stockouts) == 0:
             position['operational_efficiency'] = 'excellent'
         elif len(stockouts) <= 2:
@@ -110,9 +123,22 @@ class StrategicPlannerAgent(BaseSpecialistAgent):
             'optimization_opportunities': []
         }
         
-        # Analyze inventory balance
-        high_stock = [product for product, qty in inventory.items() if qty >= 7]
-        low_stock = [product for product, qty in inventory.items() if qty <= 2]
+        # Analyze inventory balance - handle both dict and int inventory values
+        high_stock = []
+        low_stock = []
+        
+        for product, qty in inventory.items():
+            if isinstance(qty, dict):
+                actual_qty = qty.get('total_quantity', 0)
+            elif hasattr(qty, 'total_quantity'):
+                actual_qty = qty.total_quantity
+            else:
+                actual_qty = qty
+                
+            if actual_qty >= 7:
+                high_stock.append(product)
+            elif actual_qty <= 2:
+                low_stock.append(product)
         
         if len(high_stock) > len(low_stock):
             allocation['optimization_opportunities'].append("Rebalance inventory")
@@ -195,3 +221,26 @@ class StrategicPlannerAgent(BaseSpecialistAgent):
         tyrion_conclusion = f"\n🎯 TYRION'S CONCLUSION: 'A business needs strategy like a kingdom needs allies! Every decision shapes our position tomorrow!'"
         
         return " | ".join(reasoning_parts) + tyrion_conclusion 
+
+    # 🏰 PHASE 4B.2: TYRION'S SPECIALIZED STRATEGIC PLANNING TOOLS 🏰
+    # Tools extracted to src/tools/strategic_tools.py
+    
+    def long_term_planning_framework(self, store_status: Dict, context: Dict) -> Dict:
+        """📜 TOOL 1: Advanced long-term strategic planning and scenario modeling"""
+        return self.tools.long_term_planning_framework(store_status, context)
+    
+    def risk_assessment_matrix(self, store_status: Dict, context: Dict) -> Dict:
+        """⚖️ TOOL 2: Comprehensive risk assessment and mitigation planning"""
+        return self.tools.risk_assessment_matrix(store_status, context)
+    
+    def resource_allocation_optimizer(self, store_status: Dict, context: Dict) -> Dict:
+        """💰 TOOL 3: Strategic resource allocation and investment optimization"""
+        return self.tools.resource_allocation_optimizer(store_status, context)
+    
+    def strategic_scenario_planner(self, store_status: Dict, context: Dict) -> Dict:
+        """🎲 TOOL 4: Advanced scenario planning and strategic contingency modeling"""
+        return self.tools.strategic_scenario_planner(store_status, context)
+    
+    def diplomatic_negotiation_tools(self, store_status: Dict, context: Dict) -> Dict:
+        """🤝 TOOL 5: Strategic negotiation and relationship optimization frameworks"""
+        return self.tools.diplomatic_negotiation_tools(store_status, context) 

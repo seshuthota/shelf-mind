@@ -3,11 +3,18 @@ from enum import Enum
 from dataclasses import dataclass
 import json
 import random
-from openai import OpenAI
 import os
 from dotenv import load_dotenv
 
-from src.core.multi_agent_engine import AgentRole, AgentDecision
+# Optional AI imports - gracefully handle missing dependencies
+try:
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OpenAI = None
+    OPENAI_AVAILABLE = False
+
+from src.core.models import AgentRole, AgentDecision
 from src.core.agent_prompts import AgentPrompts
 
 load_dotenv()
@@ -69,11 +76,20 @@ class CharacterDebateEngine:
     
     def __init__(self, provider: str = "openai"):
         self.provider = provider
-        if provider == "openai":
+        self.client = None
+        self.model = None
+        
+        if provider == "openai" and OPENAI_AVAILABLE:
             self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
             self.model = "gpt-4.1-mini"
+        elif provider == "mock":
+            # Mock provider for testing
+            self.client = None
+            self.model = "mock"
         else:
-            raise NotImplementedError("Only OpenAI provider supported for debates currently")
+            # No AI client available or unsupported provider
+            self.client = None
+            self.model = "no_ai"
             
         self.debate_history = []
         self.character_relationships = self._initialize_character_relationships()
@@ -535,8 +551,15 @@ REBUTTAL: [One paragraph response in character voice]
         # Determine if consensus was achieved
         consensus_achieved, winning_position = self._determine_consensus_outcome(positions, character_votes)
         
-        # Generate business decision from debate outcome
-        business_decision = self._generate_business_decision(topic, winning_position, store_status)
+        # Generate compromise solution if no clear consensus
+        compromise_solution = None
+        if not consensus_achieved:
+            compromise_solution = self._generate_compromise_solution(topic, positions, character_votes)
+            print(f"\n🤝 COMPROMISE SOLUTION:")
+            print(f"   {compromise_solution.get('description', 'No compromise available')}")
+        
+        # Generate business decision from debate outcome (includes compromise)
+        business_decision = self._generate_business_decision(topic, winning_position, store_status, compromise_solution)
         
         # Create debate summary
         debate_summary = self._create_debate_summary(topic, positions, consensus_achieved, winning_position)
@@ -544,7 +567,7 @@ REBUTTAL: [One paragraph response in character voice]
         return DebateResolution(
             winning_position=winning_position,
             consensus_achieved=consensus_achieved,
-            compromise_solution=None,
+            compromise_solution=compromise_solution,
             character_votes=character_votes,
             debate_summary=debate_summary,
             business_decision=business_decision
@@ -555,29 +578,60 @@ REBUTTAL: [One paragraph response in character voice]
         """Calculate which character each character would vote for"""
         votes = {}
         
+        print(f"\n🗳️ VOTING CALCULATION:")
+        
         for position in positions:
             character = position.character_name
             
-            # Vote for themselves by default
+            # Start with reduced self-vote to encourage cross-voting
             best_candidate = character
-            best_score = position.confidence
+            best_score = position.confidence * 0.5  # Significantly reduce self-bias
+            
+            print(f"   {character.upper()} voting:")
+            print(f"      Self-vote baseline: {best_score:.2f}")
             
             # Consider other characters based on relationships and argument quality
             for other_position in positions:
                 if other_position.character_name == character:
                     continue
                     
+                other_character = other_position.character_name
+                
                 # Calculate vote score based on relationship and argument strength
-                relationship_score = self.character_relationships.get(character, {}).get(other_position.character_name, 0.0)
+                relationship_score = self.character_relationships.get(character, {}).get(other_character, 0.0)
                 argument_score = other_position.confidence
                 
-                total_score = (relationship_score * 0.3) + (argument_score * 0.7)
+                # Enhanced scoring components
+                relationship_bonus = max(0, relationship_score) * 0.3  # Only positive relationships help
+                argument_weight = argument_score * 0.5
                 
+                # Add domain expertise bonus - characters respect expertise in relevant areas
+                expertise_bonus = 0.0
+                if other_position.agent_role == AgentRole.INVENTORY_MANAGER:
+                    expertise_bonus = 0.25  # Hermione gets strong expertise bonus
+                elif other_position.agent_role == AgentRole.STRATEGIC_PLANNER:
+                    expertise_bonus = 0.35  # Tyrion gets highest expertise bonus for strategy
+                elif other_position.agent_role == AgentRole.PRICING_ANALYST:
+                    expertise_bonus = 0.20  # Gekko gets pricing expertise bonus
+                elif other_position.agent_role == AgentRole.CRISIS_MANAGER:
+                    expertise_bonus = 0.15  # Jack gets action expertise bonus
+                    
+                # Add stance strength bonus
+                stance_bonus = 0.0
+                if other_position.stance in [DebateStance.STRONGLY_AGREE, DebateStance.STRONGLY_DISAGREE]:
+                    stance_bonus = 0.1  # Reward strong convictions
+                    
+                total_score = argument_weight + relationship_bonus + expertise_bonus + stance_bonus
+                
+                print(f"      vs {other_character}: rel={relationship_score:.2f} arg={argument_score:.2f} exp={expertise_bonus:.2f} total={total_score:.2f}")
+                
+                # Characters are more likely to vote for others with compelling arguments
                 if total_score > best_score:
-                    best_candidate = other_position.character_name
+                    best_candidate = other_character
                     best_score = total_score
                     
             votes[character] = best_candidate
+            print(f"      → VOTES FOR: {best_candidate.upper()} (score: {best_score:.2f})")
             
         return votes
         
@@ -615,17 +669,147 @@ REBUTTAL: [One paragraph response in character voice]
             
         return consensus_achieved, winning_position
         
+    def _generate_compromise_solution(self, topic: DebateTopicType, positions: List[CharacterPosition], 
+                                    character_votes: Dict[str, str]) -> Optional[Dict[str, Any]]:
+        """Generate a compromise solution when no clear winner emerges"""
+        try:
+            # Extract key parameters from positions
+            position_summary = []
+            numeric_values = []
+            
+            for pos in positions:
+                position_summary.append(f"{pos.character_name.upper()}: {pos.position_statement}")
+                # Extract numeric values for mathematical compromises
+                import re
+                numbers = re.findall(r'\d+(?:\.\d+)?', pos.position_statement)
+                if numbers:
+                    numeric_values.extend([float(n) for n in numbers])
+            
+            # Generate compromise using AI
+            compromise_prompt = f"""
+PHASE 4B CHARACTER DEBATE - COMPROMISE GENERATION
+
+Topic: {topic.value.replace('_', ' ').title()}
+Character Positions:
+{chr(10).join(position_summary)}
+
+Voting Results: {character_votes}
+
+These characters have conflicting positions with no clear majority winner.
+Generate a practical compromise solution that:
+1. Addresses core concerns from multiple positions
+2. Uses mathematical averaging for numeric values where appropriate
+3. Balances different character priorities and expertise
+4. Is actionable and specific for business implementation
+5. Explains why this compromise makes business sense
+
+Available numeric data for averaging: {numeric_values if numeric_values else 'None'}
+
+Format your response as:
+COMPROMISE: [One clear sentence describing the compromise]
+RATIONALE: [Business justification for this compromise]
+ACTION: [Specific business action to implement]
+"""
+            
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "You are a business mediator expert at finding practical compromises that satisfy multiple stakeholders."},
+                    {"role": "user", "content": compromise_prompt}
+                ],
+                max_tokens=300,
+                temperature=0.4  # Balanced creativity for compromise solutions
+            )
+            
+            compromise_text = response.choices[0].message.content.strip()
+            
+            # Parse the compromise response
+            compromise_data = self._parse_compromise_response(compromise_text, numeric_values)
+            
+            # Mathematical enhancement for numeric compromises
+            if numeric_values and len(numeric_values) >= 2:
+                avg_value = sum(numeric_values) / len(numeric_values)
+                compromise_data["mathematical_average"] = avg_value
+                
+                if topic == DebateTopicType.PRICING_STRATEGY:
+                    compromise_data["suggested_price"] = round(avg_value, 2)
+                elif topic == DebateTopicType.INVENTORY_ALLOCATION:
+                    compromise_data["suggested_quantity"] = int(avg_value)
+            
+            return compromise_data
+            
+        except Exception as e:
+            print(f"Error generating compromise: {e}")
+            # Simple fallback compromise
+            fallback_description = "Balanced approach combining elements from multiple character positions"
+            if numeric_values and len(numeric_values) >= 2:
+                avg = sum(numeric_values) / len(numeric_values)
+                fallback_description += f" (Average value: {avg:.2f})"
+                
+            return {
+                "description": fallback_description,
+                "rationale": "System-generated fallback compromise",
+                "action": "Implement hybrid approach",
+                "mathematical_average": avg if numeric_values else None
+            }
+    
+    def _parse_compromise_response(self, response_text: str, numeric_values: List[float]) -> Dict[str, Any]:
+        """Parse AI response to extract compromise components"""
+        compromise_data = {
+            "description": "",
+            "rationale": "",
+            "action": "",
+            "mathematical_average": None
+        }
+        
+        lines = response_text.strip().split('\n')
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            if line.startswith('COMPROMISE:'):
+                compromise_data["description"] = line.replace('COMPROMISE:', '').strip()
+            elif line.startswith('RATIONALE:'):
+                compromise_data["rationale"] = line.replace('RATIONALE:', '').strip()
+            elif line.startswith('ACTION:'):
+                compromise_data["action"] = line.replace('ACTION:', '').strip()
+        
+        # Ensure we have a description
+        if not compromise_data["description"]:
+            compromise_data["description"] = "Balanced compromise solution"
+            
+        return compromise_data
+        
     def _generate_business_decision(self, topic: DebateTopicType, winning_position: Optional[CharacterPosition],
-                                  store_status: Dict) -> Dict[str, Any]:
+                                  store_status: Dict, compromise_solution: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Generate actual business decision from debate outcome"""
         
-        if not winning_position:
+        if not winning_position and not compromise_solution:
             return {
                 "decision_type": "no_action",
-                "reasoning": "No consensus achieved - maintaining status quo",
+                "reasoning": "No consensus achieved and no compromise found - maintaining status quo",
                 "action_parameters": {}
             }
+        
+        # Use compromise solution if no clear winner
+        if not winning_position and compromise_solution:
+            return {
+                "decision_type": f"{topic.value}_compromise",
+                "reasoning": f"COMPROMISE SOLUTION: {compromise_solution.get('description', 'Balanced approach')}",
+                "action_parameters": {
+                    "compromise_rationale": compromise_solution.get('rationale', ''),
+                    "compromise_action": compromise_solution.get('action', ''),
+                    "mathematical_average": compromise_solution.get('mathematical_average'),
+                    "suggested_price": compromise_solution.get('suggested_price'),
+                    "suggested_quantity": compromise_solution.get('suggested_quantity'),
+                    "confidence": 0.6,  # Moderate confidence for compromises
+                    "character_lead": "consensus"
+                }
+            }
             
+        # Use winning position if clear winner
         return {
             "decision_type": topic.value,
             "reasoning": f"Following {winning_position.character_name.upper()}'s recommendation: {winning_position.position_statement}",
@@ -680,32 +864,206 @@ REBUTTAL: [One paragraph response in character voice]
         }
         return character_to_role.get(character_name, AgentRole.INVENTORY_MANAGER)
         
-    def should_trigger_debate(self, agent_decisions: List[AgentDecision], store_status: Dict) -> Optional[DebateTopicType]:
-        """Determine if current situation should trigger a character debate"""
+    def should_trigger_debate(self, agent_decisions: List[AgentDecision], store_status: Dict, 
+                             resource_conflicts: List = None) -> Optional[DebateTopicType]:
+        """🧠 Phase 5A.2: Smart Debate Triggering - Respect Domain Authority
         
-        # Check for high-priority conflicting decisions
-        high_priority_decisions = [d for d in agent_decisions if d.priority >= 7]
+        Only trigger debates for:
+        1. Cross-domain conflicts (e.g., Gekko's pricing conflicts with Hermione's inventory needs)
+        2. Resource allocation conflicts (limited cash, competing supplier needs) 
+        3. Strategic direction conflicts (conflicting long-term visions)
+        4. Emergency situations override normal protocols
         
-        if len(high_priority_decisions) >= 2:
-            # Multiple high-priority decisions - likely conflict
+        NO DEBATE for domain-specific decisions within character expertise.
+        """
+        
+        # Import domain authority constants
+        from src.core.multi_agent_engine import CHARACTER_AUTHORITY_MATRIX
+        
+        print(f"\n🧠 SMART DEBATE ANALYSIS: Evaluating {len(agent_decisions)} decisions...")
+        
+        # 1. EMERGENCY OVERRIDE: Jack's crisis decisions bypass normal debate protocols
+        crisis_decisions = [d for d in agent_decisions if d.agent_role.value == "crisis_manager" and d.priority >= 8]
+        if crisis_decisions:
+            print(f"⚡ EMERGENCY OVERRIDE: Jack's crisis decision bypasses debate protocols")
+            return None  # No debate - crisis needs immediate action
             
-            # Determine debate topic based on decision types
-            decision_types = [d.decision_type for d in high_priority_decisions]
+        # 2. DOMAIN AUTHORITY RESPECT: Filter out domain-specific decisions
+        cross_domain_decisions = []
+        domain_specific_decisions = []
+        
+        for decision in agent_decisions:
+            agent_domains = CHARACTER_AUTHORITY_MATRIX.get(decision.agent_role, {}).get("primary_domains", [])
+            decision_type_lower = decision.decision_type.lower()
             
-            if any("pricing" in dt.lower() for dt in decision_types):
-                return DebateTopicType.PRICING_STRATEGY
-            elif any("inventory" in dt.lower() for dt in decision_types):
-                return DebateTopicType.INVENTORY_ALLOCATION
-            elif any("crisis" in dt.lower() for dt in decision_types):
-                return DebateTopicType.CRISIS_RESPONSE
+            # Check if decision falls within agent's primary domain
+            is_domain_specific = any(domain in decision_type_lower or 
+                                   any(domain_word in decision_type_lower for domain_word in domain.split('_'))
+                                   for domain in agent_domains)
+            
+            if is_domain_specific and decision.priority < CHARACTER_AUTHORITY_MATRIX.get(decision.agent_role, {}).get("override_threshold", 7):
+                domain_specific_decisions.append(decision)
+                print(f"✅ DOMAIN AUTHORITY: {decision.agent_role.value} decides {decision.decision_type} (within expertise)")
+            else:
+                cross_domain_decisions.append(decision)
+                
+        # 3. CROSS-DOMAIN CONFLICT DETECTION
+        cross_domain_conflicts = self._detect_cross_domain_conflicts(cross_domain_decisions, store_status)
+        
+        if cross_domain_conflicts:
+            conflict_type, conflict_details = cross_domain_conflicts
+            print(f"⚔️ CROSS-DOMAIN CONFLICT DETECTED: {conflict_type}")
+            print(f"   Agents: {', '.join([d.agent_role.value for d in conflict_details['conflicting_decisions']])}")
+            
+            # Map conflict types to debate topics
+            if "pricing" in conflict_type.lower() or "inventory" in conflict_type.lower():
+                return DebateTopicType.INVENTORY_ALLOCATION if "inventory" in conflict_type.lower() else DebateTopicType.PRICING_STRATEGY
+            elif "strategic" in conflict_type.lower():
+                return DebateTopicType.STRATEGIC_PLANNING
+            elif "customer" in conflict_type.lower():
+                return DebateTopicType.CUSTOMER_SERVICE
             else:
                 return DebateTopicType.STRATEGIC_PLANNING
                 
-        # Check for business crisis situations
+        # 4. RESOURCE ALLOCATION CONFLICTS
+        if resource_conflicts:
+            severe_conflicts = [c for c in resource_conflicts if c.conflict_severity >= 0.7]
+            if severe_conflicts:
+                conflict = severe_conflicts[0]  # Handle most severe first
+                print(f"💰 RESOURCE CONFLICT DETECTED: {conflict.resource_type}")
+                print(f"   Demand: {conflict.total_demand:.1f} vs Supply: {conflict.available_supply:.1f}")
+                print(f"   Competing agents: {', '.join([a.value for a in conflict.competing_agents])}")
+                
+                if conflict.resource_type == "cash":
+                    return DebateTopicType.STRATEGIC_PLANNING  # Cash allocation is strategic
+                elif "inventory" in conflict.resource_type:
+                    return DebateTopicType.INVENTORY_ALLOCATION
+                else:
+                    return DebateTopicType.STRATEGIC_PLANNING
+                    
+        # 5. HIGH-STAKES BUSINESS SITUATIONS (Legacy logic as backup)
+        high_priority_decisions = [d for d in agent_decisions if d.priority >= 8]
+        if len(high_priority_decisions) >= 2:
+            # Multiple critical decisions - may indicate business crisis
+            decision_types = [d.decision_type for d in high_priority_decisions]
+            
+            print(f"⚠️ HIGH-STAKES SITUATION: {len(high_priority_decisions)} critical decisions detected")
+            
+            if any("crisis" in dt.lower() for dt in decision_types):
+                return DebateTopicType.CRISIS_RESPONSE
+            elif any("pricing" in dt.lower() for dt in decision_types):
+                return DebateTopicType.PRICING_STRATEGY
+            elif any("inventory" in dt.lower() for dt in decision_types):
+                return DebateTopicType.INVENTORY_ALLOCATION
+                
+        # 6. BUSINESS CRISIS INDICATORS (Environmental factors)
+        # IMPORTANT: Only trigger crisis debates if domain experts aren't already handling it!
         inventory = store_status.get('inventory', {})
         stockout_count = sum(1 for v in inventory.values() if v == 0)
+        cash = store_status.get('cash', 0)
         
-        if stockout_count >= 2:
+        # Check if domain experts are already handling their areas
+        inventory_expert_deciding = any(d.agent_role.value == "inventory_manager" for d in domain_specific_decisions)
+        crisis_expert_deciding = any(d.agent_role.value == "crisis_manager" for d in domain_specific_decisions)
+        
+        if stockout_count >= 3 and cash < 100 and not crisis_expert_deciding:  # Severe business crisis
+            print(f"🚨 BUSINESS CRISIS: {stockout_count} stockouts with low cash (${cash:.2f}) - No crisis expert handling")
+            return DebateTopicType.CRISIS_RESPONSE
+        elif stockout_count >= 2 and not inventory_expert_deciding:  # Inventory crisis with no expert
+            print(f"📦 INVENTORY CRISIS: {stockout_count} stockouts detected - No inventory expert handling")
             return DebateTopicType.INVENTORY_ALLOCATION
+        elif stockout_count >= 2 and inventory_expert_deciding:
+            print(f"📦 INVENTORY SITUATION: {stockout_count} stockouts detected - Hermione (expert) is handling it")
             
+        print(f"✅ NO DEBATE NEEDED: All decisions within domain authority or no conflicts detected")
+        return None
+        
+    def _detect_cross_domain_conflicts(self, decisions: List[AgentDecision], store_status: Dict) -> Optional[Tuple[str, Dict]]:
+        """Detect conflicts between different agent domains"""
+        
+        if len(decisions) < 2:
+            return None
+            
+        # Import domain authority constants
+        from src.core.multi_agent_engine import CHARACTER_AUTHORITY_MATRIX
+        
+        # Group decisions by domain overlap
+        conflicts = []
+        
+        for i, decision1 in enumerate(decisions):
+            for j, decision2 in enumerate(decisions[i+1:], i+1):
+                conflict = self._analyze_decision_conflict(decision1, decision2, store_status)
+                if conflict:
+                    conflicts.append(conflict)
+                    
+        if conflicts:
+            # Return the most severe conflict
+            most_severe = max(conflicts, key=lambda c: c['severity'])
+            return most_severe['type'], {
+                'conflicting_decisions': most_severe['decisions'],
+                'severity': most_severe['severity'],
+                'description': most_severe['description']
+            }
+            
+        return None
+        
+    def _analyze_decision_conflict(self, decision1: AgentDecision, decision2: AgentDecision, 
+                                 store_status: Dict) -> Optional[Dict]:
+        """Analyze if two decisions conflict across domains"""
+        
+        # Same agent - no cross-domain conflict
+        if decision1.agent_role == decision2.agent_role:
+            return None
+            
+        # Pricing vs Inventory conflicts
+        if ((decision1.agent_role.value == "pricing_analyst" and decision2.agent_role.value == "inventory_manager") or
+            (decision1.agent_role.value == "inventory_manager" and decision2.agent_role.value == "pricing_analyst")):
+            
+            # Check for conflicting strategies
+            d1_params = str(decision1.parameters).lower()
+            d2_params = str(decision2.parameters).lower()
+            d1_reasoning = decision1.reasoning.lower()
+            d2_reasoning = decision2.reasoning.lower()
+            
+            # Detect conflicting approaches
+            if (("aggressive" in d1_reasoning and "conservative" in d2_reasoning) or
+                ("risk" in d1_reasoning and "safe" in d2_reasoning) or
+                ("maximize" in d1_reasoning and "minimize" in d2_reasoning)):
+                
+                return {
+                    'type': 'pricing_inventory_strategy_conflict',
+                    'decisions': [decision1, decision2],
+                    'severity': 0.8,
+                    'description': f"Conflicting risk strategies between {decision1.agent_role.value} and {decision2.agent_role.value}"
+                }
+                
+        # Customer Service vs Pricing conflicts  
+        elif ((decision1.agent_role.value == "customer_service" and decision2.agent_role.value == "pricing_analyst") or
+              (decision1.agent_role.value == "pricing_analyst" and decision2.agent_role.value == "customer_service")):
+            
+            # Check for customer satisfaction vs profit conflicts
+            if ("price_increase" in str(decision1.parameters).lower() or "price_increase" in str(decision2.parameters).lower()):
+                return {
+                    'type': 'customer_pricing_conflict',
+                    'decisions': [decision1, decision2],
+                    'severity': 0.7,
+                    'description': "Pricing decisions may conflict with customer satisfaction goals"
+                }
+                
+        # Strategic vs Operational conflicts
+        elif decision1.agent_role.value == "strategic_planner" or decision2.agent_role.value == "strategic_planner":
+            strategic_decision = decision1 if decision1.agent_role.value == "strategic_planner" else decision2
+            operational_decision = decision2 if decision1.agent_role.value == "strategic_planner" else decision1
+            
+            # Check for short-term vs long-term conflicts
+            if (strategic_decision.priority >= 7 and operational_decision.priority >= 7 and
+                abs(strategic_decision.priority - operational_decision.priority) >= 2):
+                
+                return {
+                    'type': 'strategic_operational_conflict',
+                    'decisions': [decision1, decision2],
+                    'severity': 0.6,
+                    'description': f"Strategic planning conflicts with {operational_decision.agent_role.value} operational priorities"
+                }
+                
         return None 

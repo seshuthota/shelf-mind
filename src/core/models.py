@@ -1,7 +1,27 @@
 from pydantic import BaseModel
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from datetime import datetime
 from enum import Enum
+from dataclasses import dataclass
+
+# Phase 4B: Multi-Agent System Core Models
+class AgentRole(Enum):
+    """Specialist agent roles for business management"""
+    INVENTORY_MANAGER = "inventory_manager"
+    PRICING_ANALYST = "pricing_analyst" 
+    CUSTOMER_SERVICE = "customer_service"
+    STRATEGIC_PLANNER = "strategic_planner"
+    CRISIS_MANAGER = "crisis_manager"
+
+@dataclass
+class AgentDecision:
+    """Represents a decision made by a specialist agent"""
+    agent_role: AgentRole
+    decision_type: str
+    parameters: Dict[str, Any]
+    confidence: float
+    reasoning: str
+    priority: int  # 1-10, higher = more urgent
 
 # Phase 2C: Crisis Management & Supply Chain Disruptions
 class CrisisType(str, Enum):
@@ -164,6 +184,29 @@ class StoreState(BaseModel):
     active_crises: List[CrisisEvent] = []  # Current active crisis events
     crisis_response_cash: float = 0.0  # Emergency funds from loans/responses
     regulatory_compliance_cost: float = 0.0  # Daily compliance costs from regulatory crises
+
+    # Phase 5A.3: Add budget allocation system
+    budget_allocation: Optional['BudgetAllocation'] = None
+    
+    def initialize_budgets(self, total_daily_budget: float = None):
+        """Initialize the budget allocation system"""
+        if total_daily_budget is None:
+            # Default to 30% of current cash as daily operational budget
+            total_daily_budget = self.cash * 0.3
+            
+        self.budget_allocation = BudgetAllocation(
+            total_daily_budget=total_daily_budget,
+            agent_budgets={},
+            emergency_reserve=self.cash * 0.2  # 20% emergency reserve
+        )
+        
+        # Allocate initial budgets
+        self.budget_allocation.allocate_daily_budgets(self.day, self.cash)
+    
+    def update_daily_budgets(self):
+        """Update daily budgets if needed"""
+        if self.budget_allocation:
+            self.budget_allocation.allocate_daily_budgets(self.day, self.cash)
 
 class CustomerPurchase(BaseModel):
     products: List[str]
@@ -504,3 +547,101 @@ class MarketEvent(BaseModel):
     demand_multiplier: float  # Overall market demand modifier
 
 # Crisis-related models are now defined above before StoreState 
+
+@dataclass
+class AgentBudget:
+    """Fixed budget allocation for each agent domain"""
+    agent_role: AgentRole
+    daily_budget: float
+    remaining_budget: float
+    budget_category: str  # "inventory", "pricing", "marketing", "operations"
+    auto_replenish: bool = True
+    emergency_override_threshold: float = 0.95  # When to allow budget overrides
+    
+    def can_spend(self, amount: float) -> bool:
+        """Check if agent can spend the requested amount"""
+        return self.remaining_budget >= amount
+    
+    def spend(self, amount: float, description: str = "") -> bool:
+        """Attempt to spend from budget, returns success"""
+        if self.can_spend(amount):
+            self.remaining_budget -= amount
+            return True
+        return False
+    
+    def get_utilization_rate(self) -> float:
+        """Get budget utilization rate (0.0 to 1.0)"""
+        if self.daily_budget <= 0:
+            return 0.0
+        return (self.daily_budget - self.remaining_budget) / self.daily_budget
+
+@dataclass
+class BudgetAllocation:
+    """Store-wide budget allocation system"""
+    total_daily_budget: float
+    agent_budgets: Dict[AgentRole, AgentBudget]
+    emergency_reserve: float
+    last_allocation_day: int = 0
+    
+    def allocate_daily_budgets(self, current_day: int, store_cash: float):
+        """Allocate daily budgets to agents based on store performance"""
+        if current_day <= self.last_allocation_day:
+            return  # Already allocated today
+            
+        # Calculate total available for allocation (80% of cash, keep 20% reserve)
+        available_budget = min(store_cash * 0.8, self.total_daily_budget)
+        
+        # Fixed allocation percentages - no more debates!
+        allocations = {
+            AgentRole.INVENTORY_MANAGER: 0.40,  # 40% - biggest operational need
+            AgentRole.PRICING_ANALYST: 0.20,   # 20% - price adjustments
+            AgentRole.CUSTOMER_SERVICE: 0.15,  # 15% - customer initiatives  
+            AgentRole.STRATEGIC_PLANNER: 0.15,  # 15% - strategic investments
+            AgentRole.CRISIS_MANAGER: 0.10     # 10% - emergency response
+        }
+        
+        # Allocate budgets
+        for role, percentage in allocations.items():
+            budget_amount = available_budget * percentage
+            if role in self.agent_budgets:
+                self.agent_budgets[role].remaining_budget = budget_amount
+                self.agent_budgets[role].daily_budget = budget_amount
+            else:
+                self.agent_budgets[role] = AgentBudget(
+                    agent_role=role,
+                    daily_budget=budget_amount,
+                    remaining_budget=budget_amount,
+                    budget_category=self._get_budget_category(role)
+                )
+        
+        self.last_allocation_day = current_day
+        print(f"💰 DAILY BUDGETS ALLOCATED (Day {current_day}): ${available_budget:.2f} total")
+        for role, budget in self.agent_budgets.items():
+            print(f"   {role.value}: ${budget.daily_budget:.2f}")
+    
+    def _get_budget_category(self, role: AgentRole) -> str:
+        """Get budget category for agent role"""
+        categories = {
+            AgentRole.INVENTORY_MANAGER: "inventory",
+            AgentRole.PRICING_ANALYST: "pricing",
+            AgentRole.CUSTOMER_SERVICE: "marketing",
+            AgentRole.STRATEGIC_PLANNER: "operations",
+            AgentRole.CRISIS_MANAGER: "emergency"
+        }
+        return categories.get(role, "operations")
+    
+    def get_budget_summary(self) -> Dict:
+        """Get summary of all agent budgets"""
+        return {
+            "total_allocated": sum(b.daily_budget for b in self.agent_budgets.values()),
+            "total_remaining": sum(b.remaining_budget for b in self.agent_budgets.values()),
+            "utilization_rate": sum(b.get_utilization_rate() for b in self.agent_budgets.values()) / len(self.agent_budgets),
+            "agent_budgets": {
+                role.value: {
+                    "daily": budget.daily_budget,
+                    "remaining": budget.remaining_budget,
+                    "utilization": budget.get_utilization_rate()
+                }
+                for role, budget in self.agent_budgets.items()
+            }
+        } 

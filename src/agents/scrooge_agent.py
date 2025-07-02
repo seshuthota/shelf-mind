@@ -1,3 +1,14 @@
+# ⚠️ DEPRECATED: This file is a remnant from the old single-agent system (Phases 1-3)
+# The functionality has been migrated to the new multi-agent character system:
+# - Pricing: Gordon Gekko (PricingAnalystAgent)
+# - Inventory: Hermione Granger (InventoryManagerAgent)
+# - Strategy: Tyrion Lannister (StrategicPlannerAgent)
+# - Crisis: Jack Sparrow (CrisisManagerAgent)
+# - Customer: Elle Woods (CustomerServiceAgent)
+#
+# This file will be removed in a future version.
+# Use the new multi-agent system via MultiAgentEngine instead.
+
 import json
 from typing import Dict, Any, List
 from openai import OpenAI
@@ -9,6 +20,9 @@ load_dotenv()
 
 class ScroogeAgent:
     def __init__(self, provider: str = "openai"):
+        # ⚠️ DEPRECATED - Use MultiAgentEngine instead
+        print("⚠️ WARNING: ScroogeAgent is deprecated. Use MultiAgentEngine with character-based agents instead.")
+        
         self.provider = provider
         if provider == "openai":
             self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))

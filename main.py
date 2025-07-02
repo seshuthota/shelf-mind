@@ -28,39 +28,35 @@ class StoreSimulation:
         # 🧠 Phase 3A: Connect agent with store for analytics
         self.scrooge.set_store_reference(self.store)
         
-        # 🤖 Phase 4A.2: Multi-Agent System Integration - FULL CHARACTER ENSEMBLE
-        self.multi_agent_coordinator = MultiAgentCoordinator(provider="openai")
-        self.hybrid_bridge = HybridAgentBridge(self.scrooge, self.multi_agent_coordinator)
+        # 🎯 Phase 5A.4: Simplified Realistic Business Coordination
+        from src.core.simplified_coordination import SimplifiedCoordinator
+        self.simplified_coordinator = SimplifiedCoordinator()
         
-        # 🎭 Phase 4A.2: Register ALL character specialist agents
+        # 🏭 Initialize only ACTIVE agents (daily operations)
         from src.agents.inventory_manager_agent import InventoryManagerAgent
         from src.agents.pricing_analyst_agent import PricingAnalystAgent
-        from src.agents.customer_service_agent import CustomerServiceAgent
         from src.agents.strategic_planner_agent import StrategicPlannerAgent
         from src.agents.crisis_manager_agent import CrisisManagerAgent
         
-        # 🏭 HERMIONE GRANGER - Inventory Manager (Mathematical precision)
-        self.inventory_manager = InventoryManagerAgent(provider="openai")
-        self.multi_agent_coordinator.register_specialist(self.inventory_manager)
+        # Daily Core Team (2 agents only)
+        self.inventory_manager = InventoryManagerAgent(provider="openai")    # Hermione
+        self.pricing_analyst = PricingAnalystAgent(provider="openai")        # Gekko
         
-        # 💰 GORDON GEKKO - Pricing Analyst (Ruthless market warfare)
-        self.pricing_analyst = PricingAnalystAgent(provider="openai")
-        self.multi_agent_coordinator.register_specialist(self.pricing_analyst)
+        # Periodic Support Team (as needed)
+        self.strategic_planner = StrategicPlannerAgent(provider="openai")    # Tyrion
+        self.crisis_manager = CrisisManagerAgent(provider="openai")          # Jack
         
-        # 👥 ELLE WOODS - Customer Service (Psychology & people skills)
-        self.customer_service = CustomerServiceAgent(provider="openai")
-        self.multi_agent_coordinator.register_specialist(self.customer_service)
+        # Customer Service Agent (FUTURE - not used yet)
+        # self.customer_service = CustomerServiceAgent(provider="openai")    # Elle - disabled
         
-        # 🎯 TYRION LANNISTER - Strategic Planner (Masterful strategy)
-        self.strategic_planner = StrategicPlannerAgent(provider="openai")
-        self.multi_agent_coordinator.register_specialist(self.strategic_planner)
+        # Performance tracking for coordination decisions
+        self.performance_history = []
         
-        # 🚨 JACK BAUER - Crisis Manager (Emergency response)
-        self.crisis_manager = CrisisManagerAgent(provider="openai")
-        self.multi_agent_coordinator.register_specialist(self.crisis_manager)
-        
-        # 🔄 Phase 4A: Start in hybrid mode (single agent + specialist analysis)
-        self.hybrid_bridge.set_mode("hybrid")
+        console.print("🎯 [green]SIMPLIFIED COORDINATION ENABLED[/green] - Realistic business workflow")
+        console.print("   📦 Daily: Hermione (Inventory 80% budget) + Gekko (Pricing)")
+        console.print("   📊 Every 3 Days: + Tyrion (Strategic guidance)")
+        console.print("   🚨 Crisis Mode: + Jack (Emergency response)")
+        console.print("   🚫 Elle (Customer Service): Disabled for now")
         
     def display_executive_summary(self, status):
         """Display executive summary - AT-A-GLANCE business intelligence"""
@@ -433,10 +429,70 @@ class StoreSimulation:
         
         console.print(f"🌅 Starting Day {status['day']}")
         
-        # 🤖 Phase 4A: Hybrid agent decision making
-        console.print("🤖 [bold blue]Scrooge and his specialists are pondering their next move...[/bold blue]")
+        # 🎯 Phase 5A.4: Simplified Realistic Business Coordination
+        console.print("🎯 [bold blue]ShelfMind coordination team making strategic decisions...[/bold blue]")
         try:
-            decisions = self.hybrid_bridge.make_daily_decision(status, yesterday_summary)
+            # Create StoreState for coordination
+            from src.core.models import StoreState, InventoryItem, InventoryBatch
+            
+            # Convert simple inventory dict to InventoryItem format
+            inventory_items = {}
+            for product_name, quantity in status['inventory'].items():
+                if quantity > 0:
+                    batch = InventoryBatch(
+                        quantity=quantity,
+                        received_day=max(1, status['day'] - 1),
+                        expiration_day=None
+                    )
+                    inventory_items[product_name] = InventoryItem(
+                        product_name=product_name,
+                        batches=[batch]
+                    )
+                else:
+                    inventory_items[product_name] = InventoryItem(
+                        product_name=product_name,
+                        batches=[]
+                    )
+            
+            store_state = StoreState(
+                day=status['day'],
+                cash=status['cash'],
+                inventory=inventory_items,
+                daily_sales={name: 0 for name in status['inventory'].keys()},  # Default
+                total_revenue=self.day_summaries[-1]['revenue'] if self.day_summaries else 0,
+                total_profit=self.day_summaries[-1]['profit'] if self.day_summaries else 0
+            )
+            
+            # Update performance history for coordination decisions
+            if yesterday_summary:
+                self.performance_history.append({
+                    'day': yesterday_summary['day'],
+                    'profit': yesterday_summary['profit'],
+                    'revenue': yesterday_summary['revenue'],
+                    'stockouts': len([k for k, v in yesterday_summary.get('inventory', {}).items() if v == 0]),
+                    'cash': yesterday_summary['cash_balance'],
+                    'customer_satisfaction': 0.85
+                })
+            
+            # Use simplified coordination to make decisions
+            context = {'day': status['day'], 'market_conditions': status.get('market_conditions', {})}
+            coordination_result = self.simplified_coordinator.coordinate_daily_business(
+                store_state, context, self.performance_history
+            )
+            
+            # Convert coordination result to legacy format for existing code
+            decisions = {"prices": {}, "orders": {}}
+            
+            for decision in coordination_result.get('decisions', []):
+                if decision.decision_type == "pricing_optimization":
+                    price_changes = decision.parameters.get('price_changes', {})
+                    decisions['prices'].update(price_changes)
+                elif decision.decision_type == "inventory_reorder":
+                    order_quantities = decision.parameters.get('quantities', {})
+                    decisions['orders'].update(order_quantities)
+            
+            # Store coordination result for dashboard display
+            self.last_coordination_result = coordination_result
             
             # 🧠 Phase 3A: Record decisions for analytics
             market_context = self.store.market_events_engine.get_market_conditions(status['day']).__dict__
@@ -489,9 +545,15 @@ class StoreSimulation:
             if not decisions.get("prices") and not decisions.get("orders"):
                 console.print("🤖 [italic]Scrooge decided not to make any changes today.[/italic]")
         except Exception as e:
-            console.print(f"❌ [bold red]Scrooge is having a moment of weakness:[/bold red] {e}")  
-            console.print("⚙️ [bold yellow]Using fallback ordering... Bah, humbug![/bold yellow]")
+            console.print(f"❌ [bold red]Coordination system error:[/bold red] {e}")  
+            console.print("⚙️ [bold yellow]Using fallback decisions...[/bold yellow]")
             decisions = {"orders": {}, "prices": {}}
+            self.last_coordination_result = {
+                'mode': 'fallback',
+                'decisions': [],
+                'active_agents': ['system_fallback'],
+                'error': str(e)
+            }
         
         # Customers visit and buy
         console.print("⚙️ [bold yellow]Simulating customer rabble...[/bold yellow]")
@@ -589,11 +651,11 @@ class StoreSimulation:
             except Exception as e:
                 console.print(f"🚀 [red]Growth Dashboard Error: {e}[/red]")
         
-        # 🤖 Phase 4A: Display Multi-Agent Coordination Dashboard
+        # 🎯 Phase 5A.4: Display Simplified Coordination Dashboard
         try:
-            self.display_multi_agent_dashboard(decisions)
+            self.display_simplified_coordination_dashboard(getattr(self, 'last_coordination_result', {}))
         except Exception as e:
-            console.print(f"🤖 [red]Multi-Agent Dashboard Error: {e}[/red]")
+            console.print(f"🎯 [red]Coordination Dashboard Error: {e}[/red]")
         
         return day_summary
     
@@ -1298,94 +1360,142 @@ class StoreSimulation:
         except Exception as e:
             console.print(f"🚀 [red]Growth Intelligence Error: {str(e)}[/red]")
 
-    def display_multi_agent_dashboard(self, decisions: Dict):
-        """🤖 Phase 4A: Display multi-agent coordination status with character personalities"""
+    def display_simplified_coordination_dashboard(self, coordination_result: Dict):
+        """🎯 Phase 5A.4: Display simplified coordination insights"""
         
-        # Get system status
-        system_status = self.hybrid_bridge.get_system_status()
-        coordination_summary = self.multi_agent_coordinator.get_coordination_summary()
+        console.print("\n" + "="*80)
+        console.print("🎯 [bold cyan]SIMPLIFIED COORDINATION INTELLIGENCE[/bold cyan]")
+        console.print("="*80)
         
-        # Check if we have multi-agent analysis in decisions
-        multi_agent_analysis = decisions.get('multi_agent_analysis', {})
+        # Handle fallback/error case
+        if coordination_result.get('mode') == 'fallback':
+            console.print("⚠️ [red]COORDINATION SYSTEM ERROR - USING FALLBACK[/red]")
+            console.print(f"   Error: {coordination_result.get('error', 'Unknown error')}")
+            return
         
-        # 🎭 Import character personalities
-        from src.core.agent_prompts import AgentPrompts
+        # Operation mode display
+        mode = coordination_result.get('mode', 'unknown')
+        active_agents = coordination_result.get('active_agents', [])
+        decisions = coordination_result.get('decisions', [])
         
-        # Build character roster
-        character_roster = []
-        for role in system_status['active_specialists']:
-            personality = AgentPrompts.get_agent_personality(role)
-            character_roster.append(f"{personality['name']} ({personality['expertise']})")
+        mode_icons = {
+            'daily_operations': '🏪',
+            'strategic_review': '📊',
+            'crisis_management': '🚨'
+        }
         
-        # Multi-agent status content with character personalities
-        status_content = f"""
-🔧 [bold]OPERATION MODE:[/bold] {system_status['mode'].upper()}
-🤖 [bold]ACTIVE SPECIALISTS:[/bold] {len(system_status['active_specialists'])}
-📊 [bold]COORDINATION STATUS:[/bold] {coordination_summary.get('status', 'Active')}
-"""
+        mode_icon = mode_icons.get(mode, '📋')
+        mode_name = mode.value.replace('_', ' ').title() if hasattr(mode, 'value') else str(mode).replace('_', ' ').title()
         
-        # Add character details if any are active
-        if character_roster:
-            status_content += f"""
-🎭 [bold]SPECIALIST CHARACTERS:[/bold] {', '.join(character_roster)}
-"""
+        console.print(f"🎯 [bold]OPERATION MODE:[/bold] {mode_icon} {mode_name}")
+        console.print(f"👥 [bold]ACTIVE AGENTS:[/bold] {len(active_agents)} agents")
         
-        # Add analysis from specialists if available
-        if multi_agent_analysis:
-            status_content += f"""
-🎯 [bold]SPECIALIST ANALYSIS:[/bold] {multi_agent_analysis.get('specialist_count', 0)} recommendations
-🎪 [bold]CONFIDENCE LEVEL:[/bold] {multi_agent_analysis.get('specialist_confidence', 0):.1%}
-💡 [bold]COORDINATION:[/bold] {multi_agent_analysis.get('coordination_notes', 'Simple coordination active')}
-"""
+        # Agent status display
+        agent_info = {
+            'hermione': {'emoji': '📦', 'full_name': 'Hermione Granger', 'role': 'Inventory Manager'},
+            'gekko': {'emoji': '💰', 'full_name': 'Gordon Gekko', 'role': 'Pricing Analyst'}, 
+            'tyrion': {'emoji': '🏰', 'full_name': 'Tyrion Lannister', 'role': 'Strategic Planner'},
+            'jack': {'emoji': '⚡', 'full_name': 'Jack Bauer', 'role': 'Crisis Manager'},
+            'elle': {'emoji': '👩‍💼', 'full_name': 'Elle Woods', 'role': 'Customer Service'}
+        }
         
-        # Display the multi-agent panel
-        console.print(Panel(
-            status_content.strip(),
-            title="🎭 MULTI-AGENT CHARACTER COORDINATION",
-            border_style="cyan",
-            padding=(0, 1)
-        ))
+        console.print(f"\n👥 [bold]AGENT STATUS:[/bold]")
+        for agent_name in active_agents:
+            agent = agent_info.get(agent_name, {'emoji': '🤖', 'full_name': agent_name, 'role': 'Unknown'})
+            console.print(f"   ✅ {agent['emoji']} {agent['full_name']} ({agent['role']})")
         
-        # 🎭 Show individual character insights if available
-        if coordination_summary.get('last_coordination_day', 0) > 0:
-            # Get the latest coordination history to show character reasoning
-            coordination_history = self.multi_agent_coordinator.coordination_history
-            if coordination_history:
-                latest_decisions = coordination_history[-1].get('decisions', [])
+        # Show removed/inactive agents
+        all_agents = ['hermione', 'gekko', 'tyrion', 'jack', 'elle']
+        inactive_agents = [a for a in all_agents if a not in active_agents]
+        if inactive_agents:
+            console.print(f"\n💤 [bold]INACTIVE AGENTS:[/bold]")
+            for agent_name in inactive_agents:
+                agent = agent_info.get(agent_name, {'emoji': '🤖', 'full_name': agent_name, 'role': 'Unknown'})
+                if agent_name == 'elle':
+                    status = "(Disabled - No customer interaction yet)"
+                else:
+                    status = "(Not needed today)"
+                console.print(f"   ⭕ {agent['emoji']} {agent['full_name']} {status}")
+        
+        # Budget allocation (for inventory/crisis modes)
+        budget_allocation = coordination_result.get('budget_allocation', {})
+        if budget_allocation:
+            console.print(f"\n💰 [bold]BUDGET ALLOCATION:[/bold]")
+            total_budget = sum(v for v in budget_allocation.values() if v > 0)
+            
+            for agent, amount in budget_allocation.items():
+                if amount > 0:
+                    percentage = (amount / total_budget) * 100 if total_budget > 0 else 0
+                    agent_display = agent.replace('_', ' ').title()
+                    console.print(f"   💵 {agent_display}: ${amount:.2f} ({percentage:.1f}%)")
+                elif agent == 'gekko':
+                    console.print(f"   💼 Gekko (Pricing): $0.00 (Domain authority only)")
+        
+        # Decisions made
+        console.print(f"\n📝 [bold]DECISIONS MADE:[/bold] {len(decisions)} total")
+        if decisions:
+            for i, decision in enumerate(decisions, 1):
+                agent_role = decision.agent_role.value.replace('_', ' ').title()
+                decision_type = decision.decision_type.replace('_', ' ').title()
+                confidence = f"{decision.confidence:.1%}"
+                priority = decision.priority
                 
-                # Sort by priority (highest first)
-                sorted_decisions = sorted(latest_decisions, key=lambda d: d.priority, reverse=True)
+                priority_emoji = "🔥" if priority >= 8 else "⚡" if priority >= 6 else "📋"
                 
-                character_insights = ""
-                for decision in sorted_decisions:
-                    personality = AgentPrompts.get_agent_personality(decision.agent_role)
-                    
-                    # Priority emoji
-                    priority_emoji = "🔥" if decision.priority >= 4 else "⚠️" if decision.priority >= 3 else "📊"
-                    
-                    # Character-specific reasoning preview
-                    reasoning_preview = decision.reasoning
-                    if len(reasoning_preview) > 150:
-                        # Find last complete sentence within limit
-                        last_period = reasoning_preview.rfind('.', 0, 150)
-                        if last_period > 100:
-                            reasoning_preview = reasoning_preview[:last_period + 1] + ".."
-                        else:
-                            reasoning_preview = reasoning_preview[:150] + "..."
-                    
-                    character_insights += f"""
-🎭 [bold]{personality['name']} ({personality['expertise']}):[/bold] {priority_emoji}Priority {decision.priority}/5, {decision.confidence:.0%} confidence
-   💭 "{personality['catchphrase']}"
-   📋 Character Analysis: {reasoning_preview}
-"""
-                
-                if character_insights:
-                    console.print(Panel(
-                        character_insights.strip(),
-                        title="🎭 CHARACTER SPECIALIST INSIGHTS & PERSONALITIES",
-                        border_style="magenta",
-                        padding=(0, 1)
-                    ))
+                console.print(f"   {i}. {priority_emoji} {agent_role}: {decision_type}")
+                console.print(f"      └─ Confidence: {confidence} | Priority: {priority}/10")
+                console.print(f"      └─ {decision.reasoning[:70]}...")
+        
+        # Special guidance or crisis response
+        guidance = coordination_result.get('guidance_provided')
+        crisis_response = coordination_result.get('crisis_response')
+        
+        if guidance:
+            console.print(f"\n🎯 [bold]STRATEGIC GUIDANCE PROVIDED:[/bold]")
+            console.print(f"   📊 Performance Analysis: {guidance.get('performance_analysis', 'N/A')}")
+            console.print(f"   📦 Inventory Guidance: {guidance.get('inventory_guidance', 'N/A')[:60]}...")
+            console.print(f"   💰 Pricing Guidance: {guidance.get('pricing_guidance', 'N/A')[:60]}...")
+        
+        if crisis_response:
+            console.print(f"\n🚨 [bold]CRISIS RESPONSE ACTIVATED:[/bold]")
+            console.print(f"   ⚡ Crisis Type: {crisis_response.get('crisis_type', 'Unknown')}")
+            console.print(f"   📊 Severity: {crisis_response.get('severity', 'Unknown').upper()}")
+            console.print(f"   ⏰ Timeline: {crisis_response.get('timeline', 'Unknown')}")
+        
+        # Coordination efficiency metrics
+        if hasattr(self, 'simplified_coordinator'):
+            summary = self.simplified_coordinator.get_coordination_summary()
+            
+            console.print(f"\n📊 [bold]COORDINATION EFFICIENCY:[/bold]")
+            console.print(f"   📅 Total Days: {summary.get('total_days', 0)}")
+            console.print(f"   🏪 Daily Operations: {summary.get('daily_operations', 0)}")
+            console.print(f"   📊 Strategic Reviews: {summary.get('strategic_reviews', 0)}")
+            console.print(f"   🚨 Crisis Interventions: {summary.get('crisis_interventions', 0)}")
+            console.print(f"   📈 Efficiency: {summary.get('coordination_efficiency', 'N/A')}")
+            console.print(f"   👥 Avg Agents/Day: {summary.get('average_agents_per_day', 0)}")
+        
+        # Performance correlation
+        if len(self.day_summaries) >= 2:
+            recent_profit = self.day_summaries[-1]['profit']
+            previous_profit = self.day_summaries[-2]['profit']
+            profit_change = ((recent_profit - previous_profit) / previous_profit) * 100 if previous_profit > 0 else 0
+            
+            performance_trend = "📈 IMPROVING" if profit_change > 5 else "📉 DECLINING" if profit_change < -5 else "📊 STABLE"
+            
+            console.print(f"\n📈 [bold]PERFORMANCE IMPACT:[/bold]")
+            console.print(f"   💰 Profit Trend: {performance_trend} ({profit_change:+.1f}%)")
+            console.print(f"   🎯 Coordination Mode: {mode_name}")
+            
+            # Efficiency insight
+            avg_agents = summary.get('average_agents_per_day', 5) if hasattr(self, 'simplified_coordinator') else 5
+            if avg_agents <= 2.5:
+                console.print(f"   ✅ [green]Efficient coordination with minimal agent overhead![/green]")
+            elif avg_agents <= 3.5:
+                console.print(f"   🟡 [yellow]Moderate coordination complexity[/yellow]")
+            else:
+                console.print(f"   🔴 [red]High coordination overhead - consider simplification[/red]")
+        
+        console.print("="*80)
 
 @app.command()
 def run(days: int = 7, interactive: bool = False): #Default to False for non-interactive mode
@@ -1448,6 +1558,62 @@ def test():
     console.print(f"✅ Store status: {status}")
     
     console.print("🎉 All components are in order! Now, back to making money.")
+
+@app.command()
+def web():
+    """🌐 Launch the Phase 5A.4 Web Dashboard"""
+    console.print("\n🚀 [bold blue]Starting ShelfMind Web Dashboard...[/bold blue]")
+    console.print("🌐 [bold green]Phase 5A.4: Interactive Web Interface for Character-Controlled Business AI[/bold green]")
+    console.print("=" * 80)
+    console.print("📊 [bold]Dashboard URL:[/bold] http://localhost:8000")
+    console.print("🔌 [bold]WebSocket URL:[/bold] ws://localhost:8000/ws")
+    console.print("📡 [bold]API Docs:[/bold] http://localhost:8000/docs")
+    console.print("=" * 80)
+    console.print("💡 [bold]Features:[/bold]")
+    console.print("   • Real-time simulation monitoring with live updates")
+    console.print("   • Character agent status and decision tracking")
+    console.print("   • Interactive simulation controls (start/stop/reset)")
+    console.print("   • Complete visibility of all 25 specialized tools")
+    console.print("   • Live financial metrics and inventory tracking")
+    console.print("   • Crisis management and emergency response monitoring")
+    console.print("   • Historical performance analytics and trends")
+    console.print("=" * 80)
+    console.print("🎭 [bold]Revolutionary Character Control:[/bold]")
+    console.print("   👩‍🔬 [cyan]HERMIONE[/cyan] - Inventory Management with 5 analytical tools")
+    console.print("   💼 [yellow]GEKKO[/yellow] - Pricing Strategy with 5 market warfare tools")
+    console.print("   💖 [magenta]ELLE[/magenta] - Customer Psychology with 5 relationship tools")
+    console.print("   🎯 [green]TYRION[/green] - Strategic Planning with 5 intelligence tools")
+    console.print("   🚨 [red]JACK[/red] - Crisis Management with 5 emergency response tools")
+    console.print("=" * 80)
+    console.print("\n🔥 [bold red]This is the world's first Character-Controlled Business AI with full tool visibility![/bold red]")
+    console.print("🌟 [bold yellow]Professional-grade dashboard ready for commercial demonstration[/bold yellow]")
+    console.print("\n🚀 [italic]Starting web server...[/italic]")
+    
+    try:
+        import uvicorn
+        import sys
+        from pathlib import Path
+        
+        # Add src to path for imports
+        src_path = Path(__file__).parent / "src"
+        sys.path.insert(0, str(src_path))
+        
+        # Import and run the FastAPI app
+        from src.web.api import app as web_app
+        
+        uvicorn.run(
+            web_app,
+            host="0.0.0.0",
+            port=8000,
+            log_level="info"
+        )
+    except ImportError as e:
+        console.print(f"❌ [red]Import error: {e}[/red]")
+        console.print("💡 Make sure web dependencies are installed: [yellow]pip install fastapi uvicorn websockets jinja2 python-multipart aiofiles[/yellow]")
+        raise typer.Exit(1)
+    except Exception as e:
+        console.print(f"❌ [red]Failed to start web server: {e}[/red]")
+        raise typer.Exit(1)
 
 if __name__ == "__main__":
     app() 

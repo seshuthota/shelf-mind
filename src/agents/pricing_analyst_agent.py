@@ -8,6 +8,7 @@ import json
 from src.core.multi_agent_engine import BaseSpecialistAgent, AgentRole, AgentDecision
 from src.core.agent_prompts import AgentPrompts
 from src.core.models import PRODUCTS
+from src.tools.pricing_tools import PricingTools
 
 class PricingAnalystAgent(BaseSpecialistAgent):
     """💰 Phase 4A.2: Gordon Gekko - Ruthless Pricing Warfare Specialist
@@ -23,6 +24,7 @@ class PricingAnalystAgent(BaseSpecialistAgent):
     
     def __init__(self, provider: str = "openai"):
         super().__init__(AgentRole.PRICING_ANALYST, provider)
+        self.tools = PricingTools()
         
     def _define_specializations(self) -> List[str]:
         """Define Gordon Gekko's pricing warfare specializations"""
@@ -65,7 +67,13 @@ class PricingAnalystAgent(BaseSpecialistAgent):
     
     def _analyze_competitive_landscape(self, store_status: Dict) -> Dict:
         """Analyze competitive pricing with predatory precision"""
+        # Extract current prices properly from store_status
         current_prices = store_status.get('current_prices', {})
+        if not current_prices:
+            # Try getting prices from products info
+            products = store_status.get('products', {})
+            current_prices = {name: info.get('price', 0) for name, info in products.items()}
+            
         competitor_prices = store_status.get('competitor_prices', {})
         
         competitive_analysis = {
@@ -110,7 +118,12 @@ class PricingAnalystAgent(BaseSpecialistAgent):
     
     def _identify_pricing_opportunities(self, store_status: Dict, context: Dict) -> Dict:
         """Identify pricing opportunities with Wall Street ruthlessness"""
+        # Extract current prices properly
         current_prices = store_status.get('current_prices', {})
+        if not current_prices:
+            products = store_status.get('products', {})
+            current_prices = {name: info.get('price', 0) for name, info in products.items()}
+            
         inventory = store_status.get('inventory', {})
         
         opportunities = {
@@ -122,7 +135,14 @@ class PricingAnalystAgent(BaseSpecialistAgent):
         }
         
         for product, price in current_prices.items():
+            # Handle inventory data properly (could be int or dict)
             stock_level = inventory.get(product, 0)
+            if isinstance(stock_level, dict):
+                stock_level = stock_level.get('total_quantity', 0)
+            elif hasattr(stock_level, 'total_quantity'):
+                stock_level = stock_level.total_quantity
+            elif not isinstance(stock_level, (int, float)):
+                stock_level = 0
             
             # High stock + competitive price = margin expansion opportunity
             if stock_level >= 5 and price < 3.0:
@@ -251,4 +271,28 @@ class PricingAnalystAgent(BaseSpecialistAgent):
         # Add Gekko's characteristic sign-off  
         gekko_conclusion = f"\n💰 GEKKO'S CONCLUSION: 'The point is, greed works! Every price decision is a strategic weapon in market warfare!' (Market Position: {competitive_analysis['market_position']})"
         
-        return " | ".join(reasoning_parts) + gekko_conclusion 
+        gekko_reasoning = " | ".join(reasoning_parts) + gekko_conclusion
+        return gekko_reasoning 
+
+    # 💰 PHASE 4B.2: GEKKO'S SPECIALIZED MARKET WARFARE TOOLS 💰
+    # Tools extracted to src/tools/pricing_tools.py
+
+    def competitive_pricing_analyzer(self, store_status: Dict, context: Dict) -> Dict:
+        """🎯 TOOL 1: Advanced competitive pricing analysis and market intelligence"""
+        return self.tools.competitive_pricing_analyzer(store_status, context)
+    
+    def market_positioning_optimizer(self, store_status: Dict, context: Dict) -> Dict:
+        """📈 TOOL 2: Strategic market positioning and profit maximization"""
+        return self.tools.market_positioning_optimizer(store_status, context)
+    
+    def revenue_forecasting_model(self, store_status: Dict, context: Dict) -> Dict:
+        """💹 TOOL 3: Advanced revenue forecasting and profit projections"""
+        return self.tools.revenue_forecasting_model(store_status, context)
+    
+    def profit_margin_calculator(self, store_status: Dict, context: Dict) -> Dict:
+        """📊 TOOL 4: Advanced profit margin analysis and optimization"""
+        return self.tools.profit_margin_calculator(store_status, context)
+    
+    def aggressive_pricing_simulator(self, store_status: Dict, context: Dict) -> Dict:
+        """⚔️ TOOL 5: Aggressive pricing warfare simulation and strategy generator"""
+        return self.tools.aggressive_pricing_simulator(store_status, context) 

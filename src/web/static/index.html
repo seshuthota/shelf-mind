@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShelfMind - AI Business Intelligence Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .dashboard {
+            padding: 15px;
+            max-width: 1800px;
+            margin: 0 auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        /* Top row - compact summary boxes */
+        .top-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 2fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        /* Bottom row - main content */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-1px);
+        }
+
+        .card h3 {
+            color: #4f46e5;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 8px;
+        }
+
+        /* Compact cards for top row */
+        .compact-card {
+            padding: 12px;
+        }
+
+        .compact-card h3 {
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .controls {
+            background: rgba(255,255,255,0.95);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4338ca;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status-running {
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        .status-stopped {
+            background: #ef4444;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .metric-value {
+            font-weight: 700;
+            color: #059669;
+            font-size: 0.9rem;
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 8px;
+        }
+
+        .inventory-item {
+            background: #f8fafc;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        .inventory-item.stockout {
+            background: #fef2f2;
+            border: 2px solid #f87171;
+        }
+
+        .inventory-item.low-stock {
+            background: #fffbeb;
+            border: 2px solid #fbbf24;
+        }
+
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .agent-card {
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            border: 2px solid #e5e7eb;
+            font-size: 0.85rem;
+        }
+
+        .agent-card.active {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .agent-avatar {
+            font-size: 1.5rem;
+            margin-bottom: 4px;
+        }
+
+        .agent-name {
+            font-weight: 600;
+            margin-bottom: 2px;
+            font-size: 0.9rem;
+        }
+
+        .agent-status {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .log {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 10px;
+            border-radius: 6px;
+            height: 100%;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+        }
+
+        .log-entry {
+            margin-bottom: 3px;
+            padding: 1px 0;
+        }
+
+        .log-entry.day-start {
+            color: #60a5fa;
+            font-weight: bold;
+        }
+
+        .log-entry.agent-decision {
+            color: #34d399;
+        }
+
+        .log-entry.customer-activity {
+            color: #fbbf24;
+        }
+
+        .log-entry.error {
+            color: #f87171;
+        }
+
+        .log-entry.success {
+            color: #10b981;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            z-index: 1000;
+        }
+
+        .connection-status.connected {
+            background: #10b981;
+            color: white;
+        }
+
+        .connection-status.disconnected {
+            background: #ef4444;
+            color: white;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .speed-slider {
+            width: 120px;
+        }
+
+        @media (max-width: 1200px) {
+            .top-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .dashboard {
+                padding: 10px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .top-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🤖 ShelfMind Dashboard</h1>
+            <p>Phase 5A.4: Character-Controlled Business Intelligence</p>
+        </div>
+
+        <div class="connection-status" id="connectionStatus">
+            <span class="status-indicator"></span>
+            Connecting...
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="startBtn">▶️ Start Simulation</button>
+            <button class="btn btn-danger" id="stopBtn">⏸️ Stop Simulation</button>
+            <button class="btn btn-secondary" id="resetBtn">🔄 Reset</button>
+            
+            <div class="speed-control">
+                <label>Speed:</label>
+                <input type="range" class="speed-slider" id="speedSlider" min="0.1" max="5" step="0.1" value="1">
+                <span id="speedDisplay">1.0s</span>
+            </div>
+            
+            <div>
+                <span class="status-indicator" id="simStatus"></span>
+                <span id="simStatusText">Stopped</span>
+            </div>
+        </div>
+
+        <!-- Top Row - Compact Summary Boxes -->
+        <div class="top-grid">
+            <!-- Executive Summary -->
+            <div class="card compact-card">
+                <h3>📊 Executive Summary</h3>
+                <div class="metric">
+                    <span class="metric-label">Day</span>
+                    <span class="metric-value" id="currentDay">1</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Cash</span>
+                    <span class="metric-value" id="cashPosition">$150.00</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Profit</span>
+                    <span class="metric-value" id="dailyProfit">$0.00</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Revenue</span>
+                    <span class="metric-value" id="dailyRevenue">$0.00</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Units</span>
+                    <span class="metric-value" id="unitsSold">0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Trend</span>
+                    <span class="metric-value" id="profitTrend">Stable</span>
+                </div>
+            </div>
+
+            <!-- Store Inventory -->
+            <div class="card compact-card">
+                <h3>📦 Store Inventory</h3>
+                <div class="inventory-grid" id="inventoryGrid">
+                    <!-- Inventory items will be populated here -->
+                </div>
+            </div>
+
+            <!-- Character Agents -->
+            <div class="card compact-card">
+                <h3>🎭 Character Agents</h3>
+                <div class="agents-grid" id="agentsGrid">
+                    <!-- Agent cards will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Row - Main Content -->
+        <div class="main-grid">
+            <!-- Activity Log -->
+            <div class="card" style="grid-column: span 2;">
+                <h3>📝 Real-Time Activity Log</h3>
+                <div class="log" id="activityLog">
+                    <div class="log-entry">🚀 ShelfMind Dashboard initialized...</div>
+                    <div class="log-entry">📡 Connecting to simulation backend...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ShelfMindDashboard {
+            constructor() {
+                this.ws = null;
+                this.reconnectAttempts = 0;
+                this.maxReconnectAttempts = 5;
+                this.activityLog = document.getElementById('activityLog');
+                
+                this.initializeElements();
+                this.connectWebSocket();
+                this.setupEventListeners();
+            }
+
+            initializeElements() {
+                this.elements = {
+                    connectionStatus: document.getElementById('connectionStatus'),
+                    startBtn: document.getElementById('startBtn'),
+                    stopBtn: document.getElementById('stopBtn'),
+                    resetBtn: document.getElementById('resetBtn'),
+                    speedSlider: document.getElementById('speedSlider'),
+                    speedDisplay: document.getElementById('speedDisplay'),
+                    simStatus: document.getElementById('simStatus'),
+                    simStatusText: document.getElementById('simStatusText'),
+                    currentDay: document.getElementById('currentDay'),
+                    cashPosition: document.getElementById('cashPosition'),
+                    dailyProfit: document.getElementById('dailyProfit'),
+                    dailyRevenue: document.getElementById('dailyRevenue'),
+                    unitsSold: document.getElementById('unitsSold'),
+                    profitTrend: document.getElementById('profitTrend'),
+                    inventoryGrid: document.getElementById('inventoryGrid'),
+                    agentsGrid: document.getElementById('agentsGrid'),
+                    activityLog: document.getElementById('activityLog')
+                };
+            }
+
+            connectWebSocket() {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/ws`;
+                
+                try {
+                    this.ws = new WebSocket(wsUrl);
+                    
+                    this.ws.onopen = () => {
+                        this.updateConnectionStatus(true);
+                        this.reconnectAttempts = 0;
+                        this.logActivity('✅ Connected to ShelfMind backend', 'success');
+                    };
+                    
+                    this.ws.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        this.handleWebSocketMessage(data);
+                    };
+                    
+                    this.ws.onclose = () => {
+                        this.updateConnectionStatus(false);
+                        this.attemptReconnect();
+                    };
+                    
+                    this.ws.onerror = (error) => {
+                        console.error('WebSocket error:', error);
+                        this.logActivity('❌ WebSocket connection error', 'error');
+                    };
+                    
+                } catch (error) {
+                    console.error('Failed to create WebSocket:', error);
+                    this.updateConnectionStatus(false);
+                }
+            }
+
+            attemptReconnect() {
+                if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                    this.reconnectAttempts++;
+                    this.logActivity(`🔄 Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`, 'info');
+                    
+                    setTimeout(() => {
+                        this.connectWebSocket();
+                    }, 2000 * this.reconnectAttempts);
+                } else {
+                    this.logActivity('❌ Max reconnection attempts reached', 'error');
+                }
+            }
+
+            updateConnectionStatus(connected) {
+                const status = this.elements.connectionStatus;
+                if (connected) {
+                    status.className = 'connection-status connected';
+                    status.innerHTML = '<span class="status-indicator"></span>Connected';
+                } else {
+                    status.className = 'connection-status disconnected';
+                    status.innerHTML = '<span class="status-indicator"></span>Disconnected';
+                }
+            }
+
+            handleWebSocketMessage(data) {
+                switch (data.type) {
+                    case 'initial_state':
+                        this.updateDashboard(data.data);
+                        break;
+                    case 'day_start':
+                        this.logActivity(`🌅 Day ${data.data.day} started`, 'day-start');
+                        break;
+                    case 'agent_decisions':
+                        this.logActivity('🤖 Characters making decisions...', 'agent-decision');
+                        // Update agents with decision info if provided
+                        if (data.data && typeof data.data === 'object') {
+                            // Trigger a dashboard update to refresh agent states
+                            setTimeout(() => this.refreshAgentStates(), 100);
+                        }
+                        break;
+                    case 'customer_activity':
+                        this.logActivity(`👥 ${data.data.customers} customers, ${data.data.purchases} purchases`, 'customer-activity');
+                        break;
+                    case 'day_complete':
+                        this.updateDashboard(data.data.current_state);
+                        this.logActivity(`✅ Day ${data.data.summary.day} complete - Profit: $${data.data.summary.profit.toFixed(2)}`, 'success');
+                        break;
+                    case 'simulation_reset':
+                        this.updateDashboard(data.data);
+                        this.logActivity('🔄 Simulation reset', 'info');
+                        break;
+                    case 'error':
+                        this.logActivity(`❌ Error: ${data.data.message}`, 'error');
+                        break;
+                }
+            }
+
+            updateDashboard(state) {
+                // Update executive summary
+                const store = state.store_status || {};
+                const metrics = state.performance_metrics || {};
+                
+                this.elements.currentDay.textContent = store.day || 1;
+                this.elements.cashPosition.textContent = `$${(store.cash || 0).toFixed(2)}`;
+                this.elements.dailyProfit.textContent = `$${(metrics.daily_profit || 0).toFixed(2)}`;
+                this.elements.dailyRevenue.textContent = `$${(metrics.daily_revenue || 0).toFixed(2)}`;
+                this.elements.unitsSold.textContent = metrics.daily_units_sold || 0;
+                this.elements.profitTrend.textContent = metrics.profit_trend || 'Stable';
+
+                // Update simulation status
+                const isRunning = state.simulation_running;
+                this.elements.simStatus.className = `status-indicator ${isRunning ? 'status-running' : 'status-stopped'}`;
+                this.elements.simStatusText.textContent = isRunning ? 'Running' : 'Stopped';
+
+                // Update inventory
+                this.updateInventory(store.inventory || {});
+
+                // Update agents
+                this.updateAgents(state.agent_states || {});
+            }
+
+            updateInventory(inventory) {
+                const grid = this.elements.inventoryGrid;
+                grid.innerHTML = '';
+
+                Object.entries(inventory).forEach(([product, quantity]) => {
+                    // Handle quantity if it's an object (InventoryItem)
+                    const qty = typeof quantity === 'object' ? (quantity.total_quantity || 0) : quantity;
+                    
+                    const item = document.createElement('div');
+                    item.className = 'inventory-item';
+                    
+                    if (qty === 0) {
+                        item.classList.add('stockout');
+                    } else if (qty <= 2) {
+                        item.classList.add('low-stock');
+                    }
+                    
+                    item.innerHTML = `
+                        <div style="font-weight: 600;">${product}</div>
+                        <div style="font-size: 1.5rem; color: ${qty === 0 ? '#dc2626' : qty <= 2 ? '#f59e0b' : '#059669'};">
+                            ${qty}
+                        </div>
+                    `;
+                    
+                    grid.appendChild(item);
+                });
+            }
+
+            updateAgents(agentStates) {
+                const grid = this.elements.agentsGrid;
+                grid.innerHTML = '';
+
+                const agentInfo = {
+                    'InventoryManager': { emoji: '👩‍🔬', name: 'Hermione', title: 'Inventory' },
+                    'PricingAnalyst': { emoji: '💼', name: 'Gekko', title: 'Pricing' },
+                    'CustomerService': { emoji: '💖', name: 'Elle', title: 'Customer' },
+                    'StrategicPlanner': { emoji: '🎯', name: 'Tyrion', title: 'Strategy' },
+                    'CrisisManager': { emoji: '🚨', name: 'Jack', title: 'Crisis' }
+                };
+
+                // If no agent states provided, show default states
+                if (!agentStates || Object.keys(agentStates).length === 0) {
+                    Object.entries(agentInfo).forEach(([agentType, info]) => {
+                        const card = document.createElement('div');
+                        card.className = 'agent-card';
+                        
+                        card.innerHTML = `
+                            <div class="agent-avatar">${info.emoji}</div>
+                            <div class="agent-name">${info.name}</div>
+                            <div style="font-size: 0.7rem; color: #6b7280; margin-bottom: 3px;">${info.title}</div>
+                            <div class="agent-status">Ready</div>
+                            <div style="font-size: 0.7rem; margin-top: 3px;">
+                                Status: Idle
+                            </div>
+                        `;
+                        
+                        grid.appendChild(card);
+                    });
+                    return;
+                }
+
+                Object.entries(agentStates).forEach(([agentType, state]) => {
+                    const info = agentInfo[agentType];
+                    if (!info) return;
+
+                    const card = document.createElement('div');
+                    card.className = `agent-card ${state.status === 'active' ? 'active' : ''}`;
+                    
+                    card.innerHTML = `
+                        <div class="agent-avatar">${info.emoji}</div>
+                        <div class="agent-name">${info.name}</div>
+                        <div style="font-size: 0.7rem; color: #6b7280; margin-bottom: 3px;">${info.title}</div>
+                        <div class="agent-status">${state.last_action || 'Ready'}</div>
+                        <div style="font-size: 0.7rem; margin-top: 3px;">
+                            Tools: ${state.tools_active || 0} | 
+                            Confidence: ${Math.round((state.confidence || 1) * 100)}%
+                        </div>
+                    `;
+                    
+                    grid.appendChild(card);
+                });
+            }
+
+            async refreshAgentStates() {
+                try {
+                    const response = await fetch('/api/status');
+                    const data = await response.json();
+                    if (data.agent_states) {
+                        this.updateAgents(data.agent_states);
+                    }
+                } catch (error) {
+                    console.error('Failed to refresh agent states:', error);
+                }
+            }
+
+            logActivity(message, type = 'info') {
+                const entry = document.createElement('div');
+                entry.className = `log-entry ${type}`;
+                entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                
+                this.activityLog.appendChild(entry);
+                this.activityLog.scrollTop = this.activityLog.scrollHeight;
+
+                // Keep only last 100 entries
+                while (this.activityLog.children.length > 100) {
+                    this.activityLog.removeChild(this.activityLog.firstChild);
+                }
+            }
+
+            setupEventListeners() {
+                this.elements.startBtn.addEventListener('click', () => {
+                    this.sendRequest('/api/simulation/start', 'POST');
+                });
+
+                this.elements.stopBtn.addEventListener('click', () => {
+                    this.sendRequest('/api/simulation/stop', 'POST');
+                });
+
+                this.elements.resetBtn.addEventListener('click', () => {
+                    if (confirm('Are you sure you want to reset the simulation?')) {
+                        this.sendRequest('/api/simulation/reset', 'POST');
+                    }
+                });
+
+                this.elements.speedSlider.addEventListener('input', (e) => {
+                    const speed = parseFloat(e.target.value);
+                    this.elements.speedDisplay.textContent = `${speed}s`;
+                    this.sendRequest(`/api/simulation/speed/${speed}`, 'POST');
+                });
+            }
+
+            async sendRequest(url, method = 'GET', body = null) {
+                try {
+                    const response = await fetch(url, {
+                        method,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: body ? JSON.stringify(body) : null
+                    });
+
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        this.logActivity(`✅ ${data.message || 'Request successful'}`, 'success');
+                    } else {
+                        this.logActivity(`❌ ${data.detail || 'Request failed'}`, 'error');
+                    }
+                } catch (error) {
+                    console.error('Request failed:', error);
+                    this.logActivity(`❌ Request failed: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new ShelfMindDashboard();
+        });
+    </script>
+</body>
+</html> 
