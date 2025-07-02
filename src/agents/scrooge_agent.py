@@ -12,7 +12,7 @@ class ScroogeAgent:
         self.provider = provider
         if provider == "openai":
             self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-            self.model = "gpt-4o"
+            self.model = "gpt-4.1-mini"
         else:
             self.client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
             self.model = "claude-3-sonnet-20240229"

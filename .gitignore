@@ -14,3 +14,4 @@ venv/
 .env.test.local
 .env.production.local
 test_env/
+.cursor/
