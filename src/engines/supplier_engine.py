@@ -1,5 +1,5 @@
 from typing import Dict, List
-from models import StoreState, PRODUCTS, SUPPLIERS, DeliveryOrder, PaymentTerm
+from src.core.models import StoreState, PRODUCTS, SUPPLIERS, DeliveryOrder, PaymentTerm
 
 
 class SupplierEngine:

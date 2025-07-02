@@ -1,6 +1,6 @@
 import random
 from typing import Dict, List, Optional
-from models import (
+from src.core.models import (
     CrisisEvent, CrisisType, EmergencyAction, StoreState, MarketEvent, 
     EconomicCondition, WeatherEvent, PRODUCTS, SUPPLIERS, InventoryItem, InventoryBatch
 )

@@ -1,6 +1,6 @@
 import random
 from typing import Dict, List, Optional
-from models import CustomerPurchase, Customer, CustomerType, CustomerSegmentData, PRODUCTS, MarketEvent
+from src.core.models import CustomerPurchase, Customer, CustomerType, CustomerSegmentData, PRODUCTS, MarketEvent
 
 
 class CustomerEngine:
@@ -240,7 +240,7 @@ class CustomerEngine:
             return 1.0
         
         # Import here to avoid circular import
-        from market_events_engine import MarketEventsEngine
+        from src.engines.market_events_engine import MarketEventsEngine
         market_engine = MarketEventsEngine()
         
         return market_engine.get_product_demand_multiplier(product_name, market_event)

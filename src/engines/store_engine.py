@@ -1,18 +1,18 @@
 from typing import Dict, List
-from models import (
+from src.core.models import (
     StoreState, Product, CustomerPurchase, PRODUCTS, SUPPLIERS, CustomerType, Customer, 
     CustomerSegmentData, DeliveryOrder, PaymentTerm, InventoryItem, InventoryBatch, 
     SpoilageReport, ProductCategory, MarketEvent
 )
-from customer_engine import CustomerEngine
-from competitor_engine import CompetitorEngine
-from supplier_engine import SupplierEngine
-from market_events_engine import MarketEventsEngine
-from crisis_engine import CrisisEngine
-from analytics_engine import AnalyticsEngine
-from strategic_planning_engine import StrategicPlanningEngine
-from learning_adaptation_engine import LearningAdaptationEngine
-from growth_expansion_engine import GrowthExpansionEngine
+from src.engines.customer_engine import CustomerEngine
+from src.engines.competitor_engine import CompetitorEngine
+from src.engines.supplier_engine import SupplierEngine
+from src.engines.market_events_engine import MarketEventsEngine
+from src.engines.crisis_engine import CrisisEngine
+from src.engines.analytics_engine import AnalyticsEngine
+from src.engines.strategic_planning_engine import StrategicPlanningEngine
+from src.engines.learning_adaptation_engine import LearningAdaptationEngine
+from src.engines.growth_expansion_engine import GrowthExpansionEngine
 
 
 class StoreEngine:

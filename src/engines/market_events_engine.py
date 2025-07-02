@@ -1,6 +1,6 @@
 import random
 from typing import Dict, List
-from models import (
+from src.core.models import (
     MarketEvent, Season, WeatherEvent, Holiday, EconomicCondition, PRODUCTS
 )
 

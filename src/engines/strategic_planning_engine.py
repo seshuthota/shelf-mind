@@ -3,7 +3,7 @@ import statistics
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from collections import defaultdict
-from models import PRODUCTS, ProductCategory, StoreState
+from src.core.models import PRODUCTS, ProductCategory, StoreState
 from datetime import datetime
 
 
@@ -282,8 +282,8 @@ class SeasonalPlanner:
         recommendations = []
         
         # Get seasonal demand multipliers
-        from market_events_engine import MarketEventsEngine
-        from models import Season, WeatherEvent, Holiday, EconomicCondition, MarketEvent
+        from src.engines.market_events_engine import MarketEventsEngine
+        from src.core.models import Season, WeatherEvent, Holiday, EconomicCondition, MarketEvent
         
         # Create upcoming season market event for analysis
         upcoming_event = MarketEvent(

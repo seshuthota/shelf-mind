@@ -7,10 +7,13 @@ from rich.panel import Panel
 from rich.prompt import Prompt
 import time
 import json
+from typing import Dict
 
-from store_engine import StoreEngine
-from scrooge_agent import ScroogeAgent
-from models import PRODUCTS
+from src.engines.store_engine import StoreEngine
+from src.agents.scrooge_agent import ScroogeAgent
+from src.core.multi_agent_engine import MultiAgentCoordinator, HybridAgentBridge
+from src.agents.inventory_manager_agent import InventoryManagerAgent
+from src.core.models import PRODUCTS
 
 app = typer.Typer()
 console = Console()
@@ -24,6 +27,40 @@ class StoreSimulation:
         
         # 🧠 Phase 3A: Connect agent with store for analytics
         self.scrooge.set_store_reference(self.store)
+        
+        # 🤖 Phase 4A.2: Multi-Agent System Integration - FULL CHARACTER ENSEMBLE
+        self.multi_agent_coordinator = MultiAgentCoordinator(provider="openai")
+        self.hybrid_bridge = HybridAgentBridge(self.scrooge, self.multi_agent_coordinator)
+        
+        # 🎭 Phase 4A.2: Register ALL character specialist agents
+        from src.agents.inventory_manager_agent import InventoryManagerAgent
+        from src.agents.pricing_analyst_agent import PricingAnalystAgent
+        from src.agents.customer_service_agent import CustomerServiceAgent
+        from src.agents.strategic_planner_agent import StrategicPlannerAgent
+        from src.agents.crisis_manager_agent import CrisisManagerAgent
+        
+        # 🏭 HERMIONE GRANGER - Inventory Manager (Mathematical precision)
+        self.inventory_manager = InventoryManagerAgent(provider="openai")
+        self.multi_agent_coordinator.register_specialist(self.inventory_manager)
+        
+        # 💰 GORDON GEKKO - Pricing Analyst (Ruthless market warfare)
+        self.pricing_analyst = PricingAnalystAgent(provider="openai")
+        self.multi_agent_coordinator.register_specialist(self.pricing_analyst)
+        
+        # 👥 ELLE WOODS - Customer Service (Psychology & people skills)
+        self.customer_service = CustomerServiceAgent(provider="openai")
+        self.multi_agent_coordinator.register_specialist(self.customer_service)
+        
+        # 🎯 TYRION LANNISTER - Strategic Planner (Masterful strategy)
+        self.strategic_planner = StrategicPlannerAgent(provider="openai")
+        self.multi_agent_coordinator.register_specialist(self.strategic_planner)
+        
+        # 🚨 JACK BAUER - Crisis Manager (Emergency response)
+        self.crisis_manager = CrisisManagerAgent(provider="openai")
+        self.multi_agent_coordinator.register_specialist(self.crisis_manager)
+        
+        # 🔄 Phase 4A: Start in hybrid mode (single agent + specialist analysis)
+        self.hybrid_bridge.set_mode("hybrid")
         
     def display_executive_summary(self, status):
         """Display executive summary - AT-A-GLANCE business intelligence"""
@@ -396,10 +433,10 @@ class StoreSimulation:
         
         console.print(f"🌅 Starting Day {status['day']}")
         
-        # Scrooge makes decision
-        console.print("🤖 [bold blue]Scrooge is pondering his next move...[/bold blue]")
+        # 🤖 Phase 4A: Hybrid agent decision making
+        console.print("🤖 [bold blue]Scrooge and his specialists are pondering their next move...[/bold blue]")
         try:
-            decisions = self.scrooge.make_daily_decision(status, yesterday_summary)
+            decisions = self.hybrid_bridge.make_daily_decision(status, yesterday_summary)
             
             # 🧠 Phase 3A: Record decisions for analytics
             market_context = self.store.market_events_engine.get_market_conditions(status['day']).__dict__
@@ -552,11 +589,17 @@ class StoreSimulation:
             except Exception as e:
                 console.print(f"🚀 [red]Growth Dashboard Error: {e}[/red]")
         
+        # 🤖 Phase 4A: Display Multi-Agent Coordination Dashboard
+        try:
+            self.display_multi_agent_dashboard(decisions)
+        except Exception as e:
+            console.print(f"🤖 [red]Multi-Agent Dashboard Error: {e}[/red]")
+        
         return day_summary
     
     def display_customer_segments(self, customers):
         """🎯 Phase 1C: Display customer segment analytics"""
-        from models import CustomerType
+        from src.core.models import CustomerType
         
         # Count customers by type
         price_sensitive = [c for c in customers if c.customer_type == CustomerType.PRICE_SENSITIVE]
@@ -838,8 +881,8 @@ class StoreSimulation:
     def display_seasonal_insights(self, market_event):
         """🎯 Phase 2B: Display seasonal insights for product demand"""
         # Import here to avoid circular import
-        from market_events_engine import MarketEventsEngine
-        from models import PRODUCTS, MarketEvent, Season, WeatherEvent, Holiday, EconomicCondition
+        from src.engines.market_events_engine import MarketEventsEngine
+        from src.core.models import PRODUCTS, MarketEvent, Season, WeatherEvent, Holiday, EconomicCondition
         
         market_engine = MarketEventsEngine()
         
@@ -1254,6 +1297,95 @@ class StoreSimulation:
                 
         except Exception as e:
             console.print(f"🚀 [red]Growth Intelligence Error: {str(e)}[/red]")
+
+    def display_multi_agent_dashboard(self, decisions: Dict):
+        """🤖 Phase 4A: Display multi-agent coordination status with character personalities"""
+        
+        # Get system status
+        system_status = self.hybrid_bridge.get_system_status()
+        coordination_summary = self.multi_agent_coordinator.get_coordination_summary()
+        
+        # Check if we have multi-agent analysis in decisions
+        multi_agent_analysis = decisions.get('multi_agent_analysis', {})
+        
+        # 🎭 Import character personalities
+        from src.core.agent_prompts import AgentPrompts
+        
+        # Build character roster
+        character_roster = []
+        for role in system_status['active_specialists']:
+            personality = AgentPrompts.get_agent_personality(role)
+            character_roster.append(f"{personality['name']} ({personality['expertise']})")
+        
+        # Multi-agent status content with character personalities
+        status_content = f"""
+🔧 [bold]OPERATION MODE:[/bold] {system_status['mode'].upper()}
+🤖 [bold]ACTIVE SPECIALISTS:[/bold] {len(system_status['active_specialists'])}
+📊 [bold]COORDINATION STATUS:[/bold] {coordination_summary.get('status', 'Active')}
+"""
+        
+        # Add character details if any are active
+        if character_roster:
+            status_content += f"""
+🎭 [bold]SPECIALIST CHARACTERS:[/bold] {', '.join(character_roster)}
+"""
+        
+        # Add analysis from specialists if available
+        if multi_agent_analysis:
+            status_content += f"""
+🎯 [bold]SPECIALIST ANALYSIS:[/bold] {multi_agent_analysis.get('specialist_count', 0)} recommendations
+🎪 [bold]CONFIDENCE LEVEL:[/bold] {multi_agent_analysis.get('specialist_confidence', 0):.1%}
+💡 [bold]COORDINATION:[/bold] {multi_agent_analysis.get('coordination_notes', 'Simple coordination active')}
+"""
+        
+        # Display the multi-agent panel
+        console.print(Panel(
+            status_content.strip(),
+            title="🎭 MULTI-AGENT CHARACTER COORDINATION",
+            border_style="cyan",
+            padding=(0, 1)
+        ))
+        
+        # 🎭 Show individual character insights if available
+        if coordination_summary.get('last_coordination_day', 0) > 0:
+            # Get the latest coordination history to show character reasoning
+            coordination_history = self.multi_agent_coordinator.coordination_history
+            if coordination_history:
+                latest_decisions = coordination_history[-1].get('decisions', [])
+                
+                # Sort by priority (highest first)
+                sorted_decisions = sorted(latest_decisions, key=lambda d: d.priority, reverse=True)
+                
+                character_insights = ""
+                for decision in sorted_decisions:
+                    personality = AgentPrompts.get_agent_personality(decision.agent_role)
+                    
+                    # Priority emoji
+                    priority_emoji = "🔥" if decision.priority >= 4 else "⚠️" if decision.priority >= 3 else "📊"
+                    
+                    # Character-specific reasoning preview
+                    reasoning_preview = decision.reasoning
+                    if len(reasoning_preview) > 150:
+                        # Find last complete sentence within limit
+                        last_period = reasoning_preview.rfind('.', 0, 150)
+                        if last_period > 100:
+                            reasoning_preview = reasoning_preview[:last_period + 1] + ".."
+                        else:
+                            reasoning_preview = reasoning_preview[:150] + "..."
+                    
+                    character_insights += f"""
+🎭 [bold]{personality['name']} ({personality['expertise']}):[/bold] {priority_emoji}Priority {decision.priority}/5, {decision.confidence:.0%} confidence
+   💭 "{personality['catchphrase']}"
+   📋 Character Analysis: {reasoning_preview}
+"""
+                
+                if character_insights:
+                    console.print(Panel(
+                        character_insights.strip(),
+                        title="🎭 CHARACTER SPECIALIST INSIGHTS & PERSONALITIES",
+                        border_style="magenta",
+                        padding=(0, 1)
+                    ))
 
 @app.command()
 def run(days: int = 7, interactive: bool = False): #Default to False for non-interactive mode

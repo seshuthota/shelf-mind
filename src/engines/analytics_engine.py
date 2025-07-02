@@ -2,7 +2,7 @@ from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from collections import defaultdict
 import statistics
-from models import StoreState, PRODUCTS, CustomerType
+from src.core.models import StoreState, PRODUCTS, CustomerType
 
 @dataclass
 class DecisionOutcome:

@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from collections import defaultdict, deque
 import statistics
 import json
-from models import StoreState, CustomerType, PRODUCTS, MarketEvent
+from src.core.models import StoreState, CustomerType, PRODUCTS, MarketEvent
 
 @dataclass
 class CustomerLearning:

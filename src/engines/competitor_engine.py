@@ -1,6 +1,6 @@
 import random
 from typing import Dict, List
-from models import PRODUCTS
+from src.core.models import PRODUCTS
 
 
 class CompetitorEngine:
