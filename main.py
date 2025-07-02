@@ -107,6 +107,10 @@ class StoreSimulation:
         # 🧠 Phase 3A: Strategic Intelligence Dashboard
         if len(self.day_summaries) >= 2:  # Need at least 2 days for analytics
             self.display_analytics_dashboard()
+        
+        # 🧠 Phase 3C: Learning & Adaptation Dashboard
+        if len(self.day_summaries) >= 3:  # Need more data for learning patterns
+            self.display_learning_dashboard()
     
     def display_status(self):
         """Display current store status"""
@@ -1017,6 +1021,117 @@ class StoreSimulation:
                 
         except Exception as e:
             console.print(f"🎯 [red]Strategic Planning Error: {str(e)}[/red]")
+    
+    def display_learning_dashboard(self):
+        """🧠 Phase 3C: Display learning and adaptation intelligence"""
+        try:
+            # Get learning insights
+            learning_data = self.store.get_learning_insights()
+            
+            learning_content = ""
+            
+            # Learning summary stats
+            summary = learning_data.get('learning_summary', {})
+            if summary:
+                learning_content += f"🧠 [bold]LEARNING INTELLIGENCE STATUS:[/bold]\n"
+                learning_content += f"   📊 Customer evolution patterns: {summary.get('customer_evolution', 0)}\n"
+                learning_content += f"   📈 Product trends tracked: {summary.get('trend_products_tracked', 0)}\n"
+                learning_content += f"   💰 Price experiments: {summary.get('price_experiments', 0)}\n"
+                learning_content += f"   🎯 Adaptive strategies: {summary.get('adaptive_strategies', 0)}\n"
+                learning_content += f"   📚 Strategy patterns: {summary.get('strategy_patterns', 0)}\n"
+            
+            # High priority learning insights
+            high_priority = learning_data.get('high_priority_insights', [])
+            if high_priority:
+                learning_content += f"\n🚨 [bold]CRITICAL LEARNING INSIGHTS:[/bold]\n"
+                for insight in high_priority[-3:]:  # Last 3 insights
+                    learning_content += f"   • {insight}\n"
+            
+            # Get specific learning analyses
+            customer_analysis = self.store.get_adaptive_customer_analysis()
+            if customer_analysis.get('market_alert'):
+                learning_content += f"\n🎯 [bold]CUSTOMER INTELLIGENCE:[/bold]\n"
+                learning_content += f"   📊 {customer_analysis['current_segments']}\n"
+                learning_content += f"   📈 Shift: {customer_analysis['baseline_shift']}\n"
+                if customer_analysis['market_alert']:
+                    learning_content += f"   ⚠️ {customer_analysis['market_alert']}\n"
+                
+                # Customer recommendations
+                recommendations = customer_analysis.get('recommendations', [])
+                if recommendations:
+                    learning_content += f"   💡 Actions: {recommendations[0]}\n"
+            
+            # Product trend analysis
+            trend_analysis = self.store.get_product_lifecycle_analysis()
+            trends = trend_analysis.get('product_trends', {})
+            if trends:
+                trending_products = [(name, data) for name, data in trends.items() 
+                                   if data['direction'] in ['rising', 'falling']]
+                if trending_products:
+                    learning_content += f"\n📈 [bold]PRODUCT LIFECYCLE INTELLIGENCE:[/bold]\n"
+                    for product, data in trending_products[:3]:  # Top 3 trends
+                        direction_emoji = "🚀" if data['direction'] == 'rising' else "📉"
+                        learning_content += f"   {direction_emoji} {product}: {data['direction'].upper()} "
+                        learning_content += f"({data['days_in_trend']} days, {data['lifecycle_stage']})\n"
+            
+            # Price elasticity intelligence  
+            elasticity_data = self.store.get_price_elasticity_intelligence()
+            elasticity_info = elasticity_data.get('price_elasticity', {})
+            if elasticity_info:
+                learning_content += f"\n💰 [bold]PRICE ELASTICITY WISDOM:[/bold]\n"
+                for product, data in list(elasticity_info.items())[:3]:  # Top 3 products
+                    sensitivity_emoji = "⚠️" if data['sensitivity'] == 'high' else "💎" if data['sensitivity'] == 'low' else "📊"
+                    learning_content += f"   {sensitivity_emoji} {product}: {data['sensitivity'].upper()} elasticity "
+                    learning_content += f"(confidence: {data['confidence']})\n"
+            
+            # Adaptive prompts summary
+            adaptive_prompts = learning_data.get('adaptive_prompts', {})
+            if adaptive_prompts:
+                adaptive_count = len([p for p in adaptive_prompts.values() if p.strip()])
+                if adaptive_count > 0:
+                    learning_content += f"\n🔄 [bold]ADAPTIVE INTELLIGENCE:[/bold] {adaptive_count} dynamic strategy adjustments active\n"
+            
+            # Display learning results from daily summary
+            if hasattr(self, 'day_summaries') and self.day_summaries:
+                latest_day = self.day_summaries[-1]
+                learning_results = latest_day.get('learning_results', {})
+                
+                if learning_results:
+                    # Customer learning from daily results
+                    customer_learning = learning_results.get('customer_learning', {})
+                    segment_shift = customer_learning.get('segment_shift', 0)
+                    if abs(segment_shift) > 0.1:  # 10% shift threshold
+                        shift_emoji = "📈" if segment_shift > 0 else "📉"
+                        learning_content += f"\n{shift_emoji} [bold]LIVE CUSTOMER SHIFT:[/bold] "
+                        learning_content += f"{segment_shift:+.1%} from baseline market composition\n"
+                    
+                    # Live trend analysis
+                    trend_analysis_live = learning_results.get('trend_analysis', {})
+                    if trend_analysis_live:
+                        learning_content += f"\n📊 [bold]LIVE TRENDS:[/bold] "
+                        trend_items = [f"{product} {info}" for product, info in trend_analysis_live.items()]
+                        learning_content += f"{', '.join(trend_items[:3])}\n"
+                    
+                    # Learning insights from today
+                    daily_insights = learning_results.get('learning_insights', [])
+                    if daily_insights:
+                        learning_content += f"\n💡 [bold]TODAY'S INSIGHTS:[/bold]\n"
+                        for insight in daily_insights[:2]:  # Top 2 insights
+                            learning_content += f"   • {insight}\n"
+            
+            # Display learning dashboard if there's content
+            if learning_content.strip():
+                console.print(Panel(
+                    learning_content.strip(),
+                    title="🧠 LEARNING & ADAPTATION INTELLIGENCE",
+                    border_style="magenta",
+                    padding=(0, 1)
+                ))
+            else:
+                console.print("🧠 [italic magenta]Learning System: Gathering behavioral data...[/italic magenta]")
+                
+        except Exception as e:
+            console.print(f"🧠 [red]Learning Intelligence Error: {str(e)}[/red]")
 
 @app.command()
 def run(days: int = 7, interactive: bool = False): #Default to False for non-interactive mode

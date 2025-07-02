@@ -11,6 +11,7 @@ from market_events_engine import MarketEventsEngine
 from crisis_engine import CrisisEngine
 from analytics_engine import AnalyticsEngine
 from strategic_planning_engine import StrategicPlanningEngine
+from learning_adaptation_engine import LearningAdaptationEngine
 
 
 class StoreEngine:
@@ -55,6 +56,7 @@ class StoreEngine:
         self.crisis_engine = CrisisEngine()  # Phase 2C: Crisis management & supply chain disruptions
         self.analytics_engine = AnalyticsEngine()  # Phase 3A: Performance analysis & strategic intelligence
         self.strategic_planning_engine = StrategicPlanningEngine()  # Phase 3B: Strategic planning & optimization
+        self.learning_engine = LearningAdaptationEngine()  # Phase 3C: Learning & adaptation systems
         
     def process_spoilage(self) -> List[SpoilageReport]:
         """🍌 Phase 2A: Process daily spoilage for fresh and frozen items"""
@@ -106,6 +108,9 @@ class StoreEngine:
             if quantity_sold > 0:
                 actual_sold = self.state.inventory[product_name].remove_quantity(quantity_sold, self.state.day)
                 self.state.daily_sales[product_name] = actual_sold
+        
+        # 🧠 Phase 3C: Store customer data for learning
+        self._yesterday_customers = customers
                 
         return customers
     
@@ -220,8 +225,44 @@ class StoreEngine:
         if spoilage_reports:
             self.spoilage_history.extend(spoilage_reports)
         
-        # Get market conditions for this day
+        # 🧠 Phase 3C: Process daily learning and adaptation
+        # Get yesterday's customer purchases (stored from simulate_customers)
+        yesterday_customers = getattr(self, '_yesterday_customers', [])
+        
+        # Detect price changes from yesterday (if any)
+        yesterday_prices = getattr(self, '_yesterday_prices', self.current_prices.copy())
+        pricing_changes = {
+            product: price for product, price in self.current_prices.items()
+            if abs(price - yesterday_prices.get(product, price)) > 0.01
+        }
+        
+        # Get market conditions for this day (needed for market context)
         market_event = self.market_events_engine.get_market_conditions(self.state.day)
+        
+        # Get market context
+        market_context = {
+            'season': market_event.season.value,
+            'weather': market_event.weather.value,
+            'holiday': market_event.holiday.value,
+            'economic_condition': market_event.economic_condition.value,
+            'demand_multiplier': market_event.demand_multiplier,
+            'profit': daily_profit,
+            'cash': self.state.cash
+        }
+        
+        # Process learning for all dimensions
+        learning_results = self.learning_engine.process_daily_learning(
+            store_state=self.state,
+            customer_purchases=yesterday_customers,
+            yesterday_sales=self.state.daily_sales,
+            market_context=market_context,
+            pricing_changes=pricing_changes if pricing_changes else None,
+            current_prices=self.current_prices  # Pass current prices to learning engine
+        )
+        
+        # Store data for next day's learning
+        self._yesterday_customers = []  # Will be updated by simulate_customers
+        self._yesterday_prices = self.current_prices.copy()
         
         # 🚨 Phase 2C: Process crisis events and emergency responses
         # Generate new crisis events based on market conditions
@@ -284,6 +325,30 @@ class StoreEngine:
                 ],
                 "daily_crisis_costs": crisis_updates["crisis_costs"],
                 "active_crisis_count": len(self.state.active_crises)
+            },
+            # Phase 3C: Learning & adaptation results
+            "learning_results": {
+                "customer_learning": {
+                    "actual_segments": f"{getattr(learning_results.get('customer_learning'), 'actual_price_sensitive_ratio', 0.6):.0%} price-sensitive",
+                    "segment_shift": getattr(learning_results.get('customer_learning'), 'segment_shift', 0.0),
+                    "lost_sales_value": learning_results.get('lost_sales', {}).get('total_lost_value', 0.0),
+                    "market_shift_warning": getattr(learning_results.get('customer_learning'), 'market_shift_warning', None)
+                },
+                "trend_analysis": {
+                    product: f"{trend.trend_direction} ({trend.days_in_trend} days)"
+                    for product, trend in learning_results.get('trend_analysis', {}).items()
+                    if hasattr(trend, 'trend_direction') and trend.trend_direction != 'stable'
+                },
+                "price_elasticity": {
+                    product: f"{elasticity.price_sensitivity} elasticity"
+                    for product, elasticity in learning_results.get('price_elasticity', {}).items()
+                    if hasattr(elasticity, 'confidence_level') and elasticity.confidence_level > 0.6
+                },
+                "adaptive_strategies": len(learning_results.get('strategy_updates', {})),
+                "learning_insights": [
+                    insight.message for insight in learning_results.get('insights', [])
+                    if hasattr(insight, 'priority') and insight.priority in ['critical', 'high']
+                ][:3]  # Top 3 insights
             }
         }
         
@@ -553,3 +618,119 @@ class StoreEngine:
             advantage = max(0, 60 - ((avg_our_price - avg_competitor_price) / avg_competitor_price) * 100)
         
         return advantage 
+    
+    # 🧠 Phase 3C: Learning & Adaptation Methods
+    
+    def get_learning_insights(self) -> Dict:
+        """🧠 Get learning insights and adaptive intelligence"""
+        return {
+            'adaptive_prompts': self.learning_engine.get_adaptive_agent_prompts(),
+            'learning_summary': self.learning_engine.get_learning_summary(),
+            'customer_evolution': len(self.learning_engine.segment_evolution),
+            'product_trends': len(self.learning_engine.product_trends),
+            'adaptive_strategies': len(self.learning_engine.adaptive_strategies),
+            'high_priority_insights': [
+                insight.message for insight in self.learning_engine.learning_insights
+                if insight.priority in ['critical', 'high']
+            ][-5:]  # Last 5 high priority insights
+        }
+    
+    def get_strategy_playbook(self) -> List[str]:
+        """📚 Get relevant proven strategies from learned pattern library"""
+        market_event = self.market_events_engine.get_market_conditions(self.state.day)
+        current_conditions = {
+            'season': market_event.season.value,
+            'weather': market_event.weather.value,
+            'profit': self.state.total_profit,
+            'cash': self.state.cash
+        }
+        return self.learning_engine.get_strategy_playbook(current_conditions)
+    
+    def get_adaptive_customer_analysis(self) -> Dict:
+        """🎯 Get dynamic customer segment analysis based on learning"""
+        if not self.learning_engine.segment_evolution:
+            return {
+                'segments': 'No data yet - need more customer interactions',
+                'recommendations': ['Continue monitoring customer behavior']
+            }
+        
+        latest_analysis = self.learning_engine.segment_evolution[-1]
+        recommendations = []
+        
+        if latest_analysis.segment_shift > 0.15:
+            recommendations.append("Market shifted toward price-sensitive customers - consider competitive pricing")
+        elif latest_analysis.segment_shift < -0.15:
+            recommendations.append("Market shifted toward brand-loyal customers - premium pricing opportunity")
+        
+        if latest_analysis.lost_sales_value > 20:
+            recommendations.append(f"Lost ${latest_analysis.lost_sales_value:.2f} to stockouts - improve inventory management")
+        
+        return {
+            'current_segments': f"{latest_analysis.actual_price_sensitive_ratio:.0%} price-sensitive, {latest_analysis.actual_brand_loyal_ratio:.0%} brand-loyal",
+            'baseline_shift': f"{latest_analysis.segment_shift:+.1%} from 60/40 baseline",
+            'lost_sales_warning': f"${latest_analysis.lost_sales_value:.2f} lost to stockouts" if latest_analysis.lost_sales_value > 0 else "No lost sales",
+            'market_alert': latest_analysis.market_shift_warning,
+            'recommendations': recommendations
+        }
+    
+    def get_product_lifecycle_analysis(self) -> Dict:
+        """📈 Get product trend and lifecycle analysis"""
+        if not self.learning_engine.product_trends:
+            return {
+                'trends': 'No trend data yet - need 7+ days of sales history',
+                'recommendations': ['Continue tracking sales patterns']
+            }
+        
+        trends = {}
+        recommendations = []
+        
+        for product, trend in self.learning_engine.product_trends.items():
+            trends[product] = {
+                'direction': trend.trend_direction,
+                'strength': f"{trend.trend_strength:+.1%}",
+                'days_in_trend': trend.days_in_trend,
+                'lifecycle_stage': trend.lifecycle_stage,
+                'sales_velocity': f"{trend.sales_velocity:.1f} units/day",
+                'recommendation': trend.recommendation
+            }
+            
+            if trend.trend_direction == 'rising' and trend.days_in_trend >= 3:
+                recommendations.append(f"🚀 {product}: Rising star - increase inventory and consider premium pricing")
+            elif trend.trend_direction == 'falling' and trend.days_in_trend >= 3:
+                recommendations.append(f"📉 {product}: Declining trend - consider promotion or reduce inventory")
+        
+        return {
+            'product_trends': trends,
+            'lifecycle_recommendations': recommendations
+        }
+    
+    def get_price_elasticity_intelligence(self) -> Dict:
+        """💰 Get price elasticity learning from experiments"""
+        if not self.learning_engine.price_elasticity:
+            return {
+                'elasticity_data': 'No elasticity data yet - need price change experiments',
+                'recommendations': ['Try adjusting prices to learn customer price sensitivity']
+            }
+        
+        elasticity_data = {}
+        recommendations = []
+        
+        for product, elasticity in self.learning_engine.price_elasticity.items():
+            if elasticity.confidence_level > 0.5:  # Only show confident measurements
+                elasticity_data[product] = {
+                    'sensitivity': elasticity.price_sensitivity,
+                    'coefficient': elasticity.elasticity_coefficient,
+                    'confidence': f"{elasticity.confidence_level:.0%}",
+                    'insight': elasticity.last_test_result
+                }
+                
+                if elasticity.price_sensitivity == 'high':
+                    recommendations.append(f"⚠️ {product}: Highly price elastic - small price changes cause big demand changes")
+                elif elasticity.price_sensitivity == 'low':
+                    recommendations.append(f"💎 {product}: Price inelastic - can adjust prices with less demand impact")
+        
+        return {
+            'price_elasticity': elasticity_data,
+            'pricing_recommendations': recommendations,
+            'experiments_conducted': len(self.learning_engine.price_change_experiments)
+        }

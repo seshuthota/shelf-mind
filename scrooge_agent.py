@@ -214,6 +214,38 @@ class ScroogeAgent:
                     "description": "🧠 Phase 3B: COMPREHENSIVE STRATEGY - Get complete strategic planning recommendations across inventory, promotions, seasonal prep, and categories. Master CEO planning!",
                     "parameters": {"type": "object", "properties": {}}
                 }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "analyze_customer_learning",
+                    "description": "🎯 Phase 3C: ADAPTIVE CUSTOMER INTELLIGENCE - Get dynamic customer segment analysis based on real behavior patterns. Learn how your pricing strategies are changing the customer base!",
+                    "parameters": {"type": "object", "properties": {}}
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "analyze_product_trends",
+                    "description": "📈 Phase 3C: PRODUCT LIFECYCLE INTELLIGENCE - Analyze product trends and lifecycle stages. Identify rising stars and declining products based on sales patterns!",
+                    "parameters": {"type": "object", "properties": {}}
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "analyze_price_elasticity",
+                    "description": "💰 Phase 3C: PRICE ELASTICITY WISDOM - Learn how customers respond to your price changes. Discover which products are price-sensitive vs price-inelastic!",
+                    "parameters": {"type": "object", "properties": {}}
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_learning_insights",
+                    "description": "🧠 Phase 3C: LEARNING & ADAPTATION INTELLIGENCE - Get comprehensive learning insights, adaptive strategies, and proven pattern library. Ultimate self-improving AI!",
+                    "parameters": {"type": "object", "properties": {}}
+                }
             }
         ]
     
@@ -264,11 +296,20 @@ You are Ebenezer Scrooge, a master of business warfare. Today is Day {store_stat
 **5. 🚨 CRISIS MANAGEMENT STATUS:**
 {crisis_briefing}
 
---- 🧠 CEO'S STRATEGIC DOCTRINE (Phase 3B Enhancement) ---
+--- 🧠 ADAPTIVE CEO'S STRATEGIC DOCTRINE (Phase 3C Learning Evolution) ---
 
-You have evolved from Warlord to strategic CEO with advanced planning capabilities. Your daily actions combine tactical excellence with strategic intelligence and optimization. Address these priorities in order:
+You have evolved from Warlord to strategic CEO to ADAPTIVE INTELLIGENCE - a self-improving AI that learns from experience and adapts strategies dynamically. Your decisions now leverage continuous learning and strategic evolution. Address these priorities in order:
 
-**PRIORITY 0: STRATEGIC PLANNING - A CEO plans strategically to maximize long-term profitability.**
+**PRIORITY 0: LEARNING & ADAPTATION - An adaptive AI learns from experience to continuously improve.**
+- **Action:** Use learning tools to understand customer behavior, market trends, and strategic adaptation.
+- **Learning & Adaptation Tools Available:**
+  - `analyze_customer_learning()` - Dynamic customer segment analysis based on real behavior patterns
+  - `analyze_product_trends()` - Product lifecycle intelligence from sales patterns  
+  - `analyze_price_elasticity()` - Price elasticity wisdom from pricing experiments
+  - `get_learning_insights()` - Comprehensive learning insights and adaptive strategies
+- **Adaptive Mindset:** Learn from customer behavior changes, product trends, price elasticity, and adapt your strategies based on experience.
+
+**PRIORITY 1: STRATEGIC PLANNING - A CEO plans strategically to maximize long-term profitability.**
 - **Action:** Use strategic planning tools to optimize your business operations systematically.
 - **Strategic Planning Tools Available:**
   - `optimize_inventory()` - Scientific inventory optimization with EOQ and carrying costs
@@ -278,7 +319,7 @@ You have evolved from Warlord to strategic CEO with advanced planning capabiliti
   - `get_strategic_plan()` - Comprehensive strategic planning across all dimensions
 - **CEO Mindset:** Think strategically about inventory optimization, promotional opportunities, seasonal preparation, and category management.
 
-**PRIORITY 1: STRATEGIC INTELLIGENCE - A CEO learns from the past to dominate the future.**
+**PRIORITY 2: STRATEGIC INTELLIGENCE - A CEO learns from the past to dominate the future.**
 - **Action:** Analyze your performance and strategic position using analytics tools.
 - **Analytics Tools Available:**
   - `analyze_performance()` - Review recent decision effectiveness
@@ -286,7 +327,7 @@ You have evolved from Warlord to strategic CEO with advanced planning capabiliti
   - `identify_patterns()` - Learn from successful strategy patterns
 - **Strategic Thinking:** Use insights to optimize today's decisions rather than just reacting to immediate conditions.
 
-**PRIORITY 2: SUPPLY CHAIN - A CEO plans for tomorrow's battles.**
+**PRIORITY 3: SUPPLY CHAIN - A CEO plans for tomorrow's battles.**
 - **Action:** You MUST reorder products when inventory falls below a safety threshold to avoid stockouts. The reorder point is **5 units**.
 - **🍌 SPOILAGE WARFARE:** Fresh products (Sandwiches, Bananas, Ice Cream) SPOIL! Check spoilage warnings and avoid over-ordering perishables.
 - **Considerations:**
@@ -296,14 +337,14 @@ You have evolved from Warlord to strategic CEO with advanced planning capabiliti
     - **FRESH ITEMS**: Order smaller quantities (3-6 units) due to spoilage risk.
     - Exploit bulk discounts (20-50 units) for NON-PERISHABLE products only.
 
-**PRIORITY 3: PRICING WARFARE - A Warlord's duty is to attack.**
+**PRIORITY 4: PRICING WARFARE - A Warlord's duty is to attack.**
 - **Action:** You MUST use the `set_price` tool EVERY DAY to maintain market pressure.
 - **Considerations:**
     - Use the 'MANDATORY PRICING TARGETS' below as your primary guide.
     - Even a $0.01 adjustment is better than passivity. Passivity is weakness.
     - Counter-attack immediately if the competitor changes their prices.
 
-🔥 THE COMBO RULE: If both Priority 2 and 3 are met, you MUST use BOTH `place_order` and `set_price` tools in the same turn.
+🔥 THE COMBO RULE: If both Priority 3 and 4 are met, you MUST use BOTH `place_order` and `set_price` tools in the same turn.
 
 --- MANDATORY PRICING TARGETS FOR TODAY ---
 
@@ -410,6 +451,27 @@ Set these exact prices using the `set_price` tool. This is not a suggestion.
                                     strategy = self._current_store.get_comprehensive_strategy()
                                     analytics_insights.append(f"🧠 Strategic Plan: {strategy}")
                                     reasoning_parts.append("Generated comprehensive strategic plan")
+                            # 🧠 Phase 3C: Learning & Adaptation tool handlers
+                            elif tool_call.function.name == "analyze_customer_learning":
+                                if hasattr(self, '_current_store') and self._current_store:
+                                    customer_analysis = self._current_store.get_adaptive_customer_analysis()
+                                    analytics_insights.append(f"🎯 Customer Learning: {customer_analysis}")
+                                    reasoning_parts.append("Analyzed dynamic customer behavior patterns")
+                            elif tool_call.function.name == "analyze_product_trends":
+                                if hasattr(self, '_current_store') and self._current_store:
+                                    trend_analysis = self._current_store.get_product_lifecycle_analysis()
+                                    analytics_insights.append(f"📈 Product Trends: {trend_analysis}")
+                                    reasoning_parts.append("Analyzed product lifecycle and trends")
+                            elif tool_call.function.name == "analyze_price_elasticity":
+                                if hasattr(self, '_current_store') and self._current_store:
+                                    elasticity_analysis = self._current_store.get_price_elasticity_intelligence()
+                                    analytics_insights.append(f"💰 Price Elasticity: {elasticity_analysis}")
+                                    reasoning_parts.append("Analyzed price elasticity from experiments")
+                            elif tool_call.function.name == "get_learning_insights":
+                                if hasattr(self, '_current_store') and self._current_store:
+                                    learning_insights = self._current_store.get_learning_insights()
+                                    analytics_insights.append(f"🧠 Learning Insights: {learning_insights}")
+                                    reasoning_parts.append("Generated comprehensive learning intelligence")
                         except (json.JSONDecodeError, KeyError) as e:
                             print(f"JSON parsing error: {e}")
                             continue
