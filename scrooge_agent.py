@@ -202,6 +202,46 @@ class ScroogeAgent:
             {
                 "type": "function",
                 "function": {
+                    "name": "evaluate_new_products",
+                    "description": "🧪 Phase 3D: NEW PRODUCT EVALUATION - Analyze new product opportunities with market demand, seasonal timing, and profitability projections. Growth intelligence!",
+                    "parameters": {"type": "object", "properties": {}}
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "analyze_service_opportunities",
+                    "description": "💼 Phase 3D: SERVICE EXPANSION - Evaluate service expansion opportunities like lottery, money orders, ATM services. Revenue diversification!",
+                    "parameters": {"type": "object", "properties": {}}
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "optimize_customer_retention",
+                    "description": "❤️ Phase 3D: CUSTOMER RETENTION - Analyze loyalty program opportunities to improve customer lifetime value and retention rates. Growth through loyalty!",
+                    "parameters": {"type": "object", "properties": {}}
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "analyze_expansion_opportunities",
+                    "description": "🏢 Phase 3D: MULTI-LOCATION EXPANSION - Evaluate opportunities for opening additional store locations. Scale your empire!",
+                    "parameters": {"type": "object", "properties": {}}
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_comprehensive_growth_analysis",
+                    "description": "🚀 Phase 3D: COMPREHENSIVE GROWTH INTELLIGENCE - Get complete growth analysis across products, services, retention, and expansion. Ultimate growth strategy!",
+                    "parameters": {"type": "object", "properties": {}}
+                }
+            },
+            {
+                "type": "function",
+                "function": {
                     "name": "analyze_categories",
                     "description": "📊 Phase 3B: CATEGORY MANAGEMENT - Analyze performance by product category and optimize space allocation. Strategic category intelligence!",
                     "parameters": {"type": "object", "properties": {}}
@@ -472,6 +512,32 @@ Set these exact prices using the `set_price` tool. This is not a suggestion.
                                     learning_insights = self._current_store.get_learning_insights()
                                     analytics_insights.append(f"🧠 Learning Insights: {learning_insights}")
                                     reasoning_parts.append("Generated comprehensive learning intelligence")
+                            # 🚀 Phase 3D: Growth & Expansion tool handlers
+                            elif tool_call.function.name == "evaluate_new_products":
+                                if hasattr(self, '_current_store') and self._current_store:
+                                    product_analysis = self._current_store.evaluate_new_products()
+                                    analytics_insights.append(f"🧪 New Product Analysis: {product_analysis}")
+                                    reasoning_parts.append("Evaluated new product opportunities")
+                            elif tool_call.function.name == "analyze_service_opportunities":
+                                if hasattr(self, '_current_store') and self._current_store:
+                                    service_analysis = self._current_store.analyze_service_opportunities()
+                                    analytics_insights.append(f"💼 Service Opportunities: {service_analysis}")
+                                    reasoning_parts.append("Analyzed service expansion opportunities")
+                            elif tool_call.function.name == "optimize_customer_retention":
+                                if hasattr(self, '_current_store') and self._current_store:
+                                    retention_analysis = self._current_store.optimize_customer_retention()
+                                    analytics_insights.append(f"❤️ Customer Retention: {retention_analysis}")
+                                    reasoning_parts.append("Optimized customer retention strategies")
+                            elif tool_call.function.name == "analyze_expansion_opportunities":
+                                if hasattr(self, '_current_store') and self._current_store:
+                                    expansion_analysis = self._current_store.analyze_expansion_opportunities()
+                                    analytics_insights.append(f"🏢 Expansion Opportunities: {expansion_analysis}")
+                                    reasoning_parts.append("Analyzed multi-location expansion opportunities")
+                            elif tool_call.function.name == "get_comprehensive_growth_analysis":
+                                if hasattr(self, '_current_store') and self._current_store:
+                                    growth_analysis = self._current_store.get_comprehensive_growth_analysis()
+                                    analytics_insights.append(f"🚀 Comprehensive Growth Analysis: {growth_analysis}")
+                                    reasoning_parts.append("Generated comprehensive growth and expansion strategy")
                         except (json.JSONDecodeError, KeyError) as e:
                             print(f"JSON parsing error: {e}")
                             continue

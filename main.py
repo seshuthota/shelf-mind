@@ -111,6 +111,10 @@ class StoreSimulation:
         # 🧠 Phase 3C: Learning & Adaptation Dashboard
         if len(self.day_summaries) >= 3:  # Need more data for learning patterns
             self.display_learning_dashboard()
+        
+        # 🚀 Phase 3D: Growth & Expansion Intelligence Dashboard
+        if len(self.day_summaries) >= 2:  # Need some business data for growth analysis
+            self.display_growth_dashboard()
     
     def display_status(self):
         """Display current store status"""
@@ -540,6 +544,13 @@ class StoreSimulation:
                 self.display_strategic_planning_dashboard()
             except Exception as e:
                 console.print(f"🎯 [red]Strategic Planning Dashboard Error: {e}[/red]")
+        
+        # 🚀 Phase 3D: Display Growth & Expansion Intelligence Dashboard
+        if len(self.day_summaries) >= 2:  # Show growth analysis after at least 2 days of data
+            try:
+                self.display_growth_dashboard()
+            except Exception as e:
+                console.print(f"🚀 [red]Growth Dashboard Error: {e}[/red]")
         
         return day_summary
     
@@ -1132,6 +1143,117 @@ class StoreSimulation:
                 
         except Exception as e:
             console.print(f"🧠 [red]Learning Intelligence Error: {str(e)}[/red]")
+    
+    def display_growth_dashboard(self):
+        """🚀 Phase 3D: Display Growth & Expansion Intelligence"""
+        try:
+            # Get comprehensive growth analysis
+            growth_data = self.store.get_comprehensive_growth_analysis()
+            
+            growth_content = ""
+            
+            # Business stage and strategy
+            growth_strategy = growth_data.get('growth_strategy', {})
+            if growth_strategy:
+                stage = growth_strategy.get('business_stage', 'Unknown')
+                focus = growth_strategy.get('primary_focus', 'Assessment needed')
+                cash = growth_strategy.get('cash_position', 0)
+                profit = growth_strategy.get('profit_level', 0)
+                
+                growth_content += f"🚀 [bold]GROWTH INTELLIGENCE STATUS:[/bold]\n"
+                growth_content += f"   🏢 Business Stage: {stage}\n"
+                growth_content += f"   🎯 Current Focus: {focus}\n"
+                growth_content += f"   💰 Cash Position: ${cash:.2f}\n"
+                growth_content += f"   📈 Daily Profit: ${profit:.2f}\n"
+            
+            # New Product Opportunities
+            product_data = growth_data.get('products', {})
+            top_products = product_data.get('top_opportunities', [])
+            if top_products:
+                growth_content += f"\n🧪 [bold]NEW PRODUCT OPPORTUNITIES:[/bold]\n"
+                for product in top_products[:3]:  # Top 3 products
+                    name = product.get('product', 'Unknown')
+                    score = product.get('opportunity_score', 0)
+                    monthly_profit = product.get('monthly_profit', 0)
+                    recommendation = product.get('recommendation', 'Unknown')
+                    
+                    score_emoji = "🔥" if score >= 0.7 else "⭐" if score >= 0.5 else "📋"
+                    growth_content += f"   {score_emoji} {name}: Score {score:.1f}, ${monthly_profit:.0f}/month - {recommendation}\n"
+            
+            # Service Expansion Opportunities  
+            service_data = growth_data.get('services', {})
+            top_services = service_data.get('top_opportunities', [])
+            if top_services:
+                growth_content += f"\n💼 [bold]SERVICE EXPANSION OPPORTUNITIES:[/bold]\n"
+                for service in top_services[:3]:  # Top 3 services
+                    name = service.get('service', 'Unknown')
+                    setup_cost = service.get('setup_cost', 0)
+                    monthly_profit = service.get('monthly_profit', 0)
+                    roi_months = service.get('roi_months', 999)
+                    
+                    roi_emoji = "💎" if roi_months <= 6 else "📈" if roi_months <= 12 else "⏰"
+                    growth_content += f"   {roi_emoji} {name}: ${setup_cost:.0f} setup, ${monthly_profit:.0f}/month, {roi_months:.1f}mo ROI\n"
+            
+            # Customer Retention Analysis
+            retention_data = growth_data.get('retention', {})
+            top_retention = retention_data.get('top_recommendation', {})
+            if top_retention:
+                program_name = top_retention.get('program', 'Unknown')
+                setup_cost = top_retention.get('setup_cost', 0)
+                monthly_benefit = top_retention.get('monthly_benefit', 0)
+                roi_percentage = top_retention.get('roi_percentage', 0)
+                
+                growth_content += f"\n❤️ [bold]CUSTOMER RETENTION OPPORTUNITY:[/bold]\n"
+                roi_emoji = "🔥" if roi_percentage >= 200 else "💎" if roi_percentage >= 100 else "📈"
+                growth_content += f"   {roi_emoji} {program_name}: ${setup_cost:.0f} setup, ${monthly_benefit:.0f}/month benefit\n"
+                growth_content += f"   💰 ROI: {roi_percentage:.0f}% annually\n"
+            
+            # Multi-Location Expansion
+            expansion_data = growth_data.get('expansion', {})
+            expansion_ready = expansion_data.get('expansion_ready', False)
+            top_locations = expansion_data.get('top_opportunities', [])
+            
+            if expansion_ready and top_locations:
+                growth_content += f"\n🏢 [bold]EXPANSION OPPORTUNITIES:[/bold]\n"
+                for location in top_locations[:2]:  # Top 2 locations
+                    area = location.get('location', 'Unknown')
+                    setup_cost = location.get('setup_cost', 0)
+                    annual_profit = location.get('projected_annual_profit', 0)
+                    roi = location.get('roi_percentage', 0)
+                    recommendation = location.get('recommendation', 'Unknown')
+                    
+                    location_emoji = "🌟" if roi >= 20 else "🏢" if roi >= 10 else "🔍"
+                    growth_content += f"   {location_emoji} {area}: ${setup_cost:,.0f} setup, ${annual_profit:,.0f}/year\n"
+                    growth_content += f"      ROI: {roi:.1f}% - {recommendation}\n"
+            elif not expansion_ready:
+                growth_content += f"\n🏢 [bold]EXPANSION STATUS:[/bold] Need stronger cash position and profitability\n"
+            
+            # Investment Summary
+            analysis_date = growth_data.get('analysis_date', 0)
+            if analysis_date:
+                growth_content += f"\n📊 [bold]GROWTH ANALYSIS:[/bold] Day {analysis_date} comprehensive evaluation\n"
+                
+                # Quick recommendations based on business stage
+                if growth_strategy.get('business_stage') == 'SURVIVAL':
+                    growth_content += f"   🎯 Priority: Focus on core profitability before expansion\n"
+                elif growth_strategy.get('business_stage') == 'GROWTH':
+                    growth_content += f"   🎯 Priority: Add profitable products and basic services\n"
+                elif growth_strategy.get('business_stage') == 'EXPANSION':
+                    growth_content += f"   🎯 Priority: Customer retention and premium services\n"
+            
+            # Display growth dashboard if there's content
+            if growth_content.strip():
+                console.print(Panel(
+                    growth_content.strip(),
+                    title="🚀 GROWTH & EXPANSION INTELLIGENCE",
+                    border_style="bright_green",
+                    padding=(0, 1)
+                ))
+            else:
+                console.print("🚀 [italic bright_green]Growth Intelligence: Analyzing expansion opportunities...[/italic bright_green]")
+                
+        except Exception as e:
+            console.print(f"🚀 [red]Growth Intelligence Error: {str(e)}[/red]")
 
 @app.command()
 def run(days: int = 7, interactive: bool = False): #Default to False for non-interactive mode

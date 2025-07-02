@@ -12,6 +12,7 @@ from crisis_engine import CrisisEngine
 from analytics_engine import AnalyticsEngine
 from strategic_planning_engine import StrategicPlanningEngine
 from learning_adaptation_engine import LearningAdaptationEngine
+from growth_expansion_engine import GrowthExpansionEngine
 
 
 class StoreEngine:
@@ -57,6 +58,7 @@ class StoreEngine:
         self.analytics_engine = AnalyticsEngine()  # Phase 3A: Performance analysis & strategic intelligence
         self.strategic_planning_engine = StrategicPlanningEngine()  # Phase 3B: Strategic planning & optimization
         self.learning_engine = LearningAdaptationEngine()  # Phase 3C: Learning & adaptation systems
+        self.growth_engine = GrowthExpansionEngine()  # Phase 3D: Growth & expansion intelligence
         
     def process_spoilage(self) -> List[SpoilageReport]:
         """🍌 Phase 2A: Process daily spoilage for fresh and frozen items"""
@@ -734,3 +736,74 @@ class StoreEngine:
             'pricing_recommendations': recommendations,
             'experiments_conducted': len(self.learning_engine.price_change_experiments)
         }
+    
+    # 🚀 Phase 3D: Growth & Expansion Intelligence Methods
+    
+    def evaluate_new_products(self) -> Dict:
+        """🧪 Phase 3D: Evaluate new product opportunities with market analysis"""
+        store_data = {
+            'cash': self.state.cash,
+            'daily_customers': sum(self.state.daily_sales.values()),
+            'daily_revenue': sum(self.state.daily_sales[name] * self.current_prices[name] for name in PRODUCTS.keys()),
+            'daily_profit': self.state.total_profit / max(1, self.state.day)
+        }
+        
+        return self.growth_engine.evaluate_new_products(store_data, self.state.day)
+    
+    def analyze_service_opportunities(self) -> Dict:
+        """💼 Phase 3D: Analyze service expansion opportunities"""
+        store_data = {
+            'cash': self.state.cash,
+            'daily_customers': sum(self.state.daily_sales.values()),
+            'daily_revenue': sum(self.state.daily_sales[name] * self.current_prices[name] for name in PRODUCTS.keys()),
+            'daily_profit': self.state.total_profit / max(1, self.state.day)
+        }
+        
+        customer_data = {
+            'price_sensitive_ratio': 0.6,  # Default segment ratios
+            'brand_loyal_ratio': 0.4
+        }
+        
+        return self.growth_engine.analyze_service_opportunities(store_data, customer_data)
+    
+    def optimize_customer_retention(self) -> Dict:
+        """❤️ Phase 3D: Optimize customer retention and loyalty programs"""
+        store_data = {
+            'cash': self.state.cash,
+            'daily_customers': sum(self.state.daily_sales.values()),
+            'daily_revenue': sum(self.state.daily_sales[name] * self.current_prices[name] for name in PRODUCTS.keys()),
+            'daily_profit': self.state.total_profit / max(1, self.state.day)
+        }
+        
+        customer_data = {
+            'price_sensitive_ratio': 0.6,
+            'brand_loyal_ratio': 0.4
+        }
+        
+        return self.growth_engine.optimize_customer_retention(store_data, customer_data)
+    
+    def analyze_expansion_opportunities(self) -> Dict:
+        """🏢 Phase 3D: Analyze multi-location expansion opportunities"""
+        store_data = {
+            'cash': self.state.cash,
+            'daily_revenue': sum(self.state.daily_sales[name] * self.current_prices[name] for name in PRODUCTS.keys()),
+            'daily_profit': self.state.total_profit / max(1, self.state.day)
+        }
+        
+        return self.growth_engine.analyze_expansion_opportunities(store_data)
+    
+    def get_comprehensive_growth_analysis(self) -> Dict:
+        """🚀 Phase 3D: Get comprehensive growth and expansion analysis"""
+        store_data = {
+            'cash': self.state.cash,
+            'daily_customers': sum(self.state.daily_sales.values()),
+            'daily_revenue': sum(self.state.daily_sales[name] * self.current_prices[name] for name in PRODUCTS.keys()),
+            'daily_profit': self.state.total_profit / max(1, self.state.day)
+        }
+        
+        customer_data = {
+            'price_sensitive_ratio': 0.6,
+            'brand_loyal_ratio': 0.4
+        }
+        
+        return self.growth_engine.get_comprehensive_growth_analysis(store_data, customer_data, self.state.day)
